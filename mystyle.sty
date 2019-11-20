@@ -1,0 +1,36 @@
+\ProvidesPackage{mystyle} 
+
+\usepackage[english]{babel}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{graphics}
+\usepackage{eso-pic}
+
+\usepackage{afterpage}
+
+%temp packages
+\usepackage{lipsum}
+\usepackage{todonotes}
+
+% Commands
+\newcommand\blankpage{%
+    \null
+    \thispagestyle{empty}%
+    \addtocounter{page}{-1}%
+    \newpage}
+    
+\newcommand{\fig}[4]{
+	\begin{figure}
+		\centering
+		\includegraphics[width=#2\textwidth]{#1}
+		\caption{\label{fig:#3}#4}
+	\end{figure}
+}
+
+\newcommand{\reffig}[1]{
+	(Figure \ref{fig:#1})
+}
