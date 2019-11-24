@@ -1,11 +1,11 @@
 \chapter{Global prediction}
 \label{sec:global}
 
-\section{What is an ECG?}
-\lipsum[4]
+\section{Introduction}
+In this Chapter, an automatic approach to detect Atrial Fibrillation is analyzed and an attempt to improve it is made through Machine Learning techniques. The state of art it's based on different public datasets offered by PhysioNet \cite{physionet}, among which MIT-BIH Atrial Fibrillation Database \cite{afdb} and Long Term AF Database \cite{ltafdb} are used.
+The method it's based on ECG, whose explanation it has been given in the Section \ref{sec:ecg_diagnose}. The reason that lies behind the use of ECG, is its intrinsic simplicity, that cannot be found in methods like blood tests, chest x-ray, etc.
 
-Electrocardiogram (ECG or EKG) is the process through which a recording of the electrical activity of the patient's heart is recorded. To measure the electrical signals as they travel, multiple small sensors, called electrodes, are attached to the body. If 10 electrodes are used, then a 12 ECG leads forms, witch each lead measuring specific electric potential difference
+\subsection{Description of MIT-BIH}
+The database includes $25$ long-term ECG recording of patients with atrial fibrillation, which is mostly paroxysmal. Each record is $10$ hours in duration and contains two ECG signals sampled at 250 samples per second with $12-bit$ resolution over a range of $\pm 10$ millivolts. The signals files (.dat) are avaiable only on 23 records. But all of records have (.atr) and (.qrs) annotations files. The former contains information about the kind of rhythm: atrial fibrillation, atrial flutter, junctional rhythm or others rhythm. The latter contains unaudited beat prepared using an automated detector and have not been corrected manually. In some cases, manually corrected beat annotations files (.qrsc) are present.
 
-\section{Automatic detection of AF}
-
-\section{}
+\section{State of the art algorithm}

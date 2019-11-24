@@ -2,9 +2,9 @@
 \label{sec:introduction}
 
 \section{What is the Atrial Fibrillation?}
-Atrial fibrillation, also abbreviated with AF or A-Fib, is an abnormal heart rhythm that happens when electrical impulses fire off in the atria \reffig{afib_heart}, from different spots without being organized. Characterized by rapid and irregular beating, caused by the chambers of the heart twitching \cite{cdcgov17} \todo{Cambiare cit}. This arrhythmia is associated with an increased risk of stroke, in fact the proportion of strokes associated with AF increases from 6.6\%, for ages 50 to 59 years, to 36.2\% for ages 80 to 89 years \cite{10.1001/archinte.1987.00370090041008}. Other risks are heart failure and even dementia \cite{Munger2014}.
+Atrial fibrillation, also abbreviated with AF or A-Fib, is an abnormal heart rhythm that happens when electrical impulses fire off in the atria \reffig{afib_heart}, from different spots without being organized. Characterized by rapid and irregular beating, caused by the chambers of the heart twitching \cite{cdcgov17}. This arrhythmia is associated with an increased risk of stroke, in fact the proportion of strokes associated with AF increases from 6.6\%, for ages 50 to 59 years, to 36.2\% for ages 80 to 89 years \cite{10.1001/archinte.1987.00370090041008}. Other risks are heart failure and even dementia \cite{Munger2014}.
 
-\fig{img/afib_heart.jpg}{0.6}{afib_heart}{A normal heart beat on the left, an AF heart beat on the right. Image from mayoclinic.org}
+\fig{img/afib_heart.jpg}{0.6}{afib_heart}{A normal heartbeat on the left, and AF heartbeat on the right. Image from mayoclinic.org}
 
 The disease is classified by doctors based on how long it lasts or based on the cause. The treatment will be different for each kind \cite{webmd2018}:
 \begin{itemize}
@@ -14,20 +14,39 @@ The disease is classified by doctors based on how long it lasts or based on the 
 \end{itemize}
 
 \section{Causes and Symptoms}
-There are many possible causes of the condition, some are controllable, others are not. Cardiovascular factors play a big role: high blood pressure, heart valve disease, congenital heart disease and even previous heart surgery. But difficulties in breathing are a key factor too, in other wordsm obesity, obstructive sleep apnea \cite{doi:10.1111/obr.12056}. Alcohol consumption and tobacco smoking are associated with an increased risk of developing atrial fibrillation \cite{Tonelo2013, DU20171968}. Other factors are genetics, ageing, a sedentary lifestyle and diabetes \cite{10.1001/jama.291.23.2851, Staerk2017}.
+There are many possible causes of the condition, some are controllable, others are not. Cardiovascular factors play a big role: high blood pressure, heart valve disease, congenital heart disease and even previous heart surgery. But difficulties in breathing are a key factor too, in other words, obesity and obstructive sleep apnea \cite{doi:10.1111/obr.12056}. Alcohol consumption and tobacco smoking are associated with an increased risk of developing atrial fibrillation \cite{Tonelo2013, DU20171968}. Other factors are genetics, ageing, a sedentary lifestyle and diabetes \cite{10.1001/jama.291.23.2851, Staerk2017}.
 
 The person often feels an abnormal beating that starts to become longer and constant. There could be heart palpitations, shortness of breath, chest pain,  light-headedness, or fainting \cite{chamberlain_gray_houghton_2010}. But the biggest problem is that often these kind of episodes are asymptomatic \cite{Munger2014}, in fact sometimes first diagnosed when patients present a stroke \cite{page2003asymptomatic}.
 
 \section{Diagnosis}
-A doctor to diagnose AF could check your signs and symptoms, together with your medical history and conduct a different kind of tests \todo{Inserire cit}:
+\label{af_diagnosis}
+A doctor to diagnose AF could check your signs and symptoms, together with your medical history and conduct a different kind of tests \cite{mayo_clinic_2019}:
 \begin{itemize}
-\item \textbf{Electrocardiogram} (ECG or EKG) is the process through which a recording of the electrical activity of the patient's heart is made. To measure the electrical signals as they travel, multiple small sensors, called electrodes, are attached to the body. This test plays a key role among all the other tools used. A more in-depth explanation will be offered in Chapter \ref{sec:global}.
+\item \textbf{Electrocardiogram} (ECG or EKG) is the process through which a recording of the electrical activity of the patient's heart is made. To measure the electrical signals as they travel, multiple small sensors, called electrodes, are attached to the body. This test plays a key role among all the other tools used. A more in-depth explanation will be offered in Section \ref{sec:ecg}.
 \item \textbf{Holter monitor} is a portable ECG device that can be carried in a pocket or even worn on a shoulder strap or a belt. The monitor will check the heart's activity for 24 hours, sometimes even longer. It is a common practice to utilize the device when there is a strong suspect about a Paroxysmal-AF but an ECG during an office visit detects only a regular rhythm.
 \item \textbf{Event recorder} is another kind of ECG portable device that is meant to monitor the heartbeat over a few weeks to a few months. When the patient feels a symptom, then the button should be pressed to let the device memorize an ECG strip of the preceding few minutes and following few minutes.
-\item \textbf{Echocardiogram} is a non-invasive test that uses ultrasound waves to scan the heart and get moving pictures of the organ. The doctors aim to find problems in the valves, in the size of the left and right atrial  or more general structural heart disease or blood clots.
+\item \textbf{Echocardiogram} is a non-invasive test that uses ultrasound waves to scan the heart and get moving pictures of the organ. The doctors aim to find problems in the valves, in the size of the left and right atrial or more general structural heart disease or blood clots.
 \item \textbf{Blood tests} are used to check any thyroid problems or other substances in the patient's blood that may lead to AF.
 \item \textbf{Stress test} can help the doctor in the task of finding AF. The reason is that some individual with the disease do well in normal activity, but not with exertion. Moreover, the nature of the symptoms can be understood.
 \item \textbf{Chest X-ray} help to see the condition of the lungs and heart of a specific patient. In general, it's used if a pulmonary cause of AF is suggested or if conditions like congestive heart failure are suspected.
 \end{itemize}
 
-The first type of test, the ECG, is an investigation performed routinely whenever an irregular heartbeat is suspected. And it can be done in the office and later even with a portable device, thus it's a relevant tool through which an automatic detection of atrial fibrillation can be implemented. The Chapter \ref{sec:global} contains a more detailed description of what an ECG does, and a state of the art approach will be discussed and improved. 
+The first type of test, the ECG, is an investigation performed routinely whenever an irregular heartbeat is suspected. And it can be done in the office and later even with a portable device, thus it's a relevant tool through which an automatic detection of atrial fibrillation can be implemented.
+
+\section{Diagnose AF using ECG}
+\label{sec:ecg_diagnose}
+Electrocardiography produces an electrocardiogram (ECG), namely a recording which is a graph where the x-axis represents the time and the y-axis represents the voltage, of the electrical activity of the heart using electrodes placed on the skin \cite[p.74]{lilly2015pathophysiology}. In this way, small electrical changes can be detected, that are the normal consequences of cardiac muscle depolarization followed by a re-polarization during each cardiac cycle \reffig{cardiac_cycle}.
+
+\fig{img/ecg.png}{0.4}{cardiac_cycle}{Cardiac cycle divided into different components. $P$, $QRS$ and $T$.}
+
+Normally the number of electrodes attached to the patient's limbs and on the surface of the chest is 10, this allows to form 12 ECG leads. Thus the overall magnitude of the electrical potential of the heart can be measured from twelve different angles (leads). 
+
+A single cardiac cycle can be divided into different components as in \reffig{cardiac_cycle}. The first is called $P$ wave, which represents the depolarization of the atria. The second one is the $QRS$ complex, that symbolize the ventricles' depolarization. To finish with the $T$ wave, which represents the re-polarization of the ventricles \cite[p.80]{lilly2015pathophysiology}.
+
+\fig{img/ecg_afib_sinus.jpg}{0.6}{sinus_and_af}{ECG of a heart with atrial fibrillation on top and with normal sinus rhythm on the bottom.} 
+
+Knowing all this, to find atrial fibrillation heartbeats through the electrocardiogram, is sufficient to run an investigation on the absence of $P$ waves with disorganized electrical activity in their place and irregular $R-R$ intervals caused by irregular conduction of impulses to the ventricles \cite{doi:10.1161/CIRCULATIONAHA.106.177292}. Furthermore, problems over fast heart rates arise since A-Fib may look more regular, which could make it indistinguishable from other supraventricular tachycardias or ventricular tachycardia \cite{issa2009clinical}.
+Besides $QRS$ complexes should be quite narrow because it means that they are initiated by a normal flow of electrical activity through the intraventricular conduction system. Otherwise wide complexes are disquieting for ventricular tachycardia, albeit in cases where there is a disorder with the conductions system, wide $QRS$ complexes may be present in A-fib with a rapid ventricular response. A good example is shown in \reffig{sinus_and_af}.
+
+In Chapter \ref{sec:global} and Chapter \ref{sec:local}, two different automatic detection of AF approaches are described based on two public datasets offered by PhysioNet \cite{physionet}, respectively MIT-BIH Atrial Fibrillation Database \cite{afdb} and Long Term AF Database \cite{ltafdb}.
+\clearpage

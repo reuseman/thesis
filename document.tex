@@ -1,24 +1,25 @@
 \documentclass[english,a4paper,12pt]{book}
 
 \usepackage{mystyle}
+%\usepackage[pdftex,pdfpagelabels,bookmarks,hyperindex,hyperfigures,hidelinks]{hyperref}
 
 \title{Using machine learning techniques to detect Atrial Fibrillation}
 \author{Alex Colucci}
 \date{\today}
 
 \begin{document}
-
 \frontmatter
 \pagestyle{empty}
 \input{./tex/front}
 %\input{./tex/dedication}
 %\input{./tex/acknowledgements}
 %\input{./tex/abstract}    
-\tableofcontents
+%\tableofcontents
 %\listoffigures
 %\listoftables
 
 \mainmatter
+\pagestyle{fancy}
 \input{./tex/introduction}
 \input{./tex/global_prediction}
 %\input{./tex/local_prediction}
