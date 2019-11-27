@@ -1,0 +1,55 @@
+This is BibTeX, Version 0.99d (TeX Live 2018)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: document.aux
+The style file: unsrt.bst
+Database file #1: ./tex/reference.bib
+Warning--I'm ignoring Tonelo2013's extra "note" field
+--line 99 of file ./tex/reference.bib
+Warning--I'm ignoring Tonelo2013's extra "note" field
+--line 100 of file ./tex/reference.bib
+Warning--I'm ignoring Staerk2017's extra "note" field
+--line 196 of file ./tex/reference.bib
+Warning--I'm ignoring Staerk2017's extra "note" field
+--line 197 of file ./tex/reference.bib
+You've used 25 entries,
+            1791 wiz_defined-function locations,
+            622 strings with 9476 characters,
+and the built_in function-call counts, 6510 in all, are:
+= -- 483
+> -- 444
+< -- 3
++ -- 158
+- -- 133
+* -- 561
+:= -- 1066
+add.period$ -- 71
+call.type$ -- 25
+change.case$ -- 22
+chr.to.int$ -- 0
+cite$ -- 25
+duplicate$ -- 231
+empty$ -- 579
+format.name$ -- 133
+if$ -- 1411
+int.to.chr$ -- 0
+int.to.str$ -- 25
+missing$ -- 23
+newline$ -- 123
+num.names$ -- 22
+pop$ -- 75
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 109
+stack$ -- 0
+substring$ -- 404
+swap$ -- 46
+text.length$ -- 3
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 0
+while$ -- 45
+width$ -- 27
+write$ -- 262
+(There were 4 warnings)

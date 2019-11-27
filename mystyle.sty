@@ -6,9 +6,12 @@
 \usepackage[utf8]{inputenc}
 
 \usepackage{amsmath}
+\usepackage{amsfonts} 
+
 \usepackage{graphicx}
 \usepackage{graphics}
 \usepackage{eso-pic}
+\usepackage[font=scriptsize]{caption}
 
 \usepackage{afterpage}
 \usepackage{fancyhdr}
@@ -16,6 +19,15 @@
 %temp packages
 \usepackage{lipsum}
 \usepackage{todonotes}
+
+% Code
+\usepackage{pythonhighlight}
+
+% Table
+%\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{booktabs,caption}
+\usepackage[flushleft]{threeparttable}
 
 % Commands
 \newcommand\blankpage{%
@@ -33,3 +45,4 @@
 }
 
 \newcommand{\reffig}[1]{(Figure \ref{fig:#1})}
+\newcommand{\reffigtext}[2]{(Figure \ref{fig:#1} #2)}
