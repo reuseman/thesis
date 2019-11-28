@@ -7,11 +7,9 @@ pi_map = get_pimap(127, 1000000)
 def compute_entropy(wv_list):
   nu = list([0] * 127)
   sh2 = list()
-
   for i in range(0, len(wv_list)):
     nu.pop(0)
     nu.append(wv_list[i])
-
     # Number of occurrences of an element are counted
     a = dict()
     for j in nu:
