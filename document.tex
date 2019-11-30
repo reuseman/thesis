@@ -14,15 +14,17 @@
 %\input{./tex/dedication}
 \input{./tex/acknowledgements}
 \input{./tex/abstract}    
-\tableofcontents
-\listoffigures
-\listoftables
-
+{\tableofcontents \let\cleardoublepage\clearpage \listoffigures \let\cleardoublepage\clearpage \listoftables}
 \mainmatter
 \pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LO]{\rightmark}
+\fancyhead[RE]{\leftmark}
+\fancyfoot[C]{\thepage}
 \input{./tex/introduction}
+\input{./tex/state_of_the_art}
 \input{./tex/global_prediction}
-%\input{./tex/local_prediction}
+\input{./tex/local_prediction}
 
 \backmatter
 \bibliography{./tex/reference.bib}

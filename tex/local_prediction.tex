@@ -1,4 +1,20 @@
 \chapter{Local prediction}
 \label{sec:local}
-\lipsum[7]
-\lipsum[5]
+
+\section{Introduction}
+A further trial to improve even more the performances of the algorithm analysed in the previous Chapter \ref{sec:global}, is to carry out a local and not global training. That is, instead of finding the discriminating threshold that works for all patients, a specific threshold per patient is found. 
+
+\section{Finding threshold}
+The procedure to complete the task consists in brutally testing all the thresholds in the range $[0.0,1.0]$ with an increase of $0.001$. But unlike what was done in Section \label{sec:entropy}, the method acts on a single record of a specific patient. The choice of the right threshold among all the others, can be done by optimizing different parameters.
+\subsection{Receiver operating characteristic}
+In the first experiment, the ROC was employed to optimize in the same way as Zhou, et al\cite{zhou2015} did, but for every single record. To decide if the performances were remarkable, the MCC metric was calculated on the total of the values of the confusion matrix. Then it was compared with the replica realized for the global prevision. The final MCC was $90.05\%$ while the replica's one was $93.59\%$. SOGLIA = 0.46196
+
+\lipsum[4]
+
+\section{TODO}
+abbiamo trovato la soglia ottima dapprima col metodo delle ROC\\
+Ma tale metrica non ottimizza determinato parametri\\
+Quindi siamo passati a considerare l'ottimo massimizzando la diagonale della confusion matrix\\
+Ed abbiamo ottenuto nuovi risultati\\
+Evidenzi i cluster con passo 0.1 e poi diciamo che a questo punto ci sono due strade\\
+O utilizzare il clustering oppure una tecnica di ML

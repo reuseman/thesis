@@ -3,128 +3,12 @@
 
 \section{Introduction}
 \label{sec:global_introduction}
-In this Chapter, an automatic approach to detect Atrial Fibrillation is analyzed and an attempt to improve it is made through Machine Learning techniques. The state of art it's based on different public datasets offered by PhysioNet \cite{physionet}, among which MIT-BIH Atrial Fibrillation Database \cite{afdb} and Long Term AF Database \cite{ltafdb} are used.
-The method it's based on ECG, whose explanation it has been given in Section \ref{sec:ecg_diagnose}. The reason that lies behind the use of ECG, is its intrinsic simplicity, that cannot be found in methods like blood tests, chest x-ray, etc.
-
-\subsection{Description of MIT-BIH}
-The database includes $25$ long-term ECG recordings of patients with atrial fibrillation, which is mostly paroxysmal. Each record is $10$ hours in duration and contains two ECG signals sampled at 250 samples per second with $12-bit$ resolution over a range of $\pm 10$ millivolts. The signals files \verb|.dat| are available only on 23 records. But all of the records have \verb|.atr| and \verb|.qrs| annotations files. The former contains information about the kind of rhythm: atrial fibrillation, atrial flutter, junctional rhythm or other rhythms. The latter contains unaudited beat prepared using an automated detector and have not been corrected manually. In some cases, manually corrected beat annotations files \verb|.qrsc| are present.
-
-\section{State of the art algorithm}
-Most of the algorithms work on the processing of the ECGs components (P wave, QRS complex, ...) and the poorly coordinate atrial activation (AA) of heart and rapid cardiac beating. Although these pieces of information can lead to the identification of Atrial Fibrillation, noise must be taken into consideration. Especially with P waves which in general is of very low-intensity magnitude. Whereas the approaches based on the RR interval (R wave peak to R wave peak) irregularity, nonetheless the component is a more prominent feature of ECG and thus less subject to noise, tend to be quite complicated and not so efficient to make them suitable for real-time applications \cite[p. 2]{zhou2015}. For this reason, a real-time and low-complexity but robust method for the discrimination of AF episodes is taken as reference. The algorithm is composed of three steps and is based on the heart rate (HR).
-
-\fig{img/zhou.png}{0.8}{zhou_img}{Application of the method to detect AF. (a) is the original sequence $hr_n$; (b) is the symbolic dynamic $sy_n$; (c) the word sequence $wn_n$; (d) the distribution of $\mathcal{H}^{\prime\prime} (\mathbf{A})$.} 
-
-\subsection{Heart rate sequence}
-Let $hr_n$ be the heartbeat rate sequence obtained from,
-\begin{equation}
-hr_n = 60\, \text{s} \cdot \frac{250}{R_n - R_{n-1}}
-\end{equation}
-where $60$ are the seconds, $R_n$ is the sequence that denotes the $R$ peak in the $QRS$ complex and $250$ is the number of samples per second. From an implementation point of view, here one bpm is lost. The \verb|.qrs| files contain a registration where the first sample does not represent the $R$ peak, therefore all the part before the first $R$ peak cannot be used to compute the first bpm. An example of the sequence $hr_n$ can be found in \reffigtext{zhou_img}{(a)}. The following implementation of the function is done in Python 3.7
-\inputpython{code/bpm.py}{1}{9}
-
-\subsection{Symbolic dynamics of $hr_n$ sequence}
-Let $sy_n$ denote a symbolic dynamics that encodes the information of $hr_n$ to a series with fewer symbols, where the mapping function is given by \cite[p. 3]{zhou2015},
-\begin{equation}
-sy_n = \begin{cases}
-63 & \text{if $hr_n \ge 315$} \\
-\lfloor hr_n / 5 \rfloor & \text{otherwise}
-\end{cases}
-\end{equation}
-where $\lfloor \cdot \rfloor$ is a floor operator. In this way the raw sequence $hr_n$ is transformed in a sequence $sy_n \in [0, 63]$, with 64 instantaneous states \reffigtext{zhou_img}{(b)}. Here below the implementation
-\inputpython{code/sy.py}{1}{2}
-
-\subsection{History sequence of $sy_n$}
-A 3-symbols template can be applied to get a window of information that acts as a history \reffigtext{zhou_img}{(c)}, in this case on 3 successive symbols. Through a novel operator-defined below \cite[p. 3]{zhou2015}, the word value can be calculated. 
-\begin{equation}
-wv_n = (sy_{n-2} \times 2^{12}) + (sy_{n-1} \times 2^{6}) + sy_n
-\end{equation}
-A major intrinsic property to be explained is the following,
-\begin{equation}
-|wv| \, = \, |sy| - 2 \, = \, |hr| - 2 \, = \, |qrs| - 3  
-\end{equation}
-where $wv$ denotes the set of words in a specific moment. The set $qrs$ is composed of all the QRSs complexes provided by the ECG, in this case in the \verb|.qrs| files. To sum up, a tiny bit of information is lost, precisely 1 $R$ peak to compute the heartbeat sequence $hr$ and 2 bpm to compute the word sequence $wv$. Here follows the implementation of the above
-\inputpython{code/wv.py}{1}{8}
-
-\subsection{Shannon entropy}
-\label{sec:entropy}
-A coarser version of Shannon entropy is employed to discriminate the AF arrhythmias \reffigtext{zhou_img}{(d)}. Without loss of generality, let $\mathbf{A} = (A|P)$ denote a dynamic system. The unique elements in this set can be defined as $A = \{a_1, \ldots, a_k\}$ with the interrelated probability set $P = \{p_1, \ldots, p_k\} (1 \le k \le N)$, where $N$ is the total number of elements and $k$ are the unique elements in space $\mathbf{A}$. Each element $a_i$ has the probability $p_i = N_i/N (0 < p_i \le 1, \sum_{i=1}^{k}p_i=1)$, where $N_i$ is the total number of the specific element $a_i$ in space $\mathbf{A}$. Hence the coarser version of Shannon entropy can be defined to quantitatively calculate the information size of $wv_n$,
-\begin{equation}\label{eq:entropy}
-\mathcal{H}^{\prime\prime} (\mathbf{A}) = -\frac{k}{N \, log_2 N} \sum_{i=1}^{k}p_i \, log_2 p_i
-\end{equation}
-The dynamic $\mathcal{A}$ is characterized by a bin size of $N=127$ consecutive word elements from $wv_{n-126}$ to $wv_n$. By defining the characteristic set $A$ and the corresponding probability set $P$, the entropy $\mathcal{H}^{\prime\prime} (\mathbf{A})$ can be calculated. A specific cardiac beat $hr_n$ is labelled as AF if the coarser entropy meets or exceeds a discrimination optimal threshold equal to $0.639$. The threshold was obtained through an investigation of various thresholds in the range $[0.0, 1.0]$ with an increment of $0.001$ from the receiver operating characteristic (ROC) on training databases. 
-The computational challenges that are found in the Equation \ref{eq:entropy} can be overcome with a pre-calculated map of $-\frac{1}{log_2 N}p_i \, log_2 pi_i$ \cite[p. 4]{zhou2015}. Here follows an implementation where a constant value $1000000$ it's used to get decimal floating points as integers through a floor operator.
-\inputpython{code/entropy.py}{1}{22}
-
-\subsection{Results and comparisons}
-\subsubsection{Performance metrics}
-The work under consideration measures the performances using sensitivity ($Se$), specificity ($Sp$), positive predictive value ($PPV$), and overall accuracy ($ACC$) \cite[p. 6]{zhou2015}.
-\begin{equation}
-\begin{aligned} S e &=\frac{T P}{T P+F N},\qquad P P V=\frac{T P}{T P+F P} \\ S p &=\frac{T N}{T N+F P}, \qquad A C C=\frac{T P+T N}{T P+T N+F P+F N} \end{aligned}
-\end{equation}
-where $TP$ stands for true positives, $TN$ true negatives, $FP$ false positives and $FN$ false negatives.
-
-\subsubsection{Training phase}
-The training phase was executed on LTAFDB which consists of 84 long-term ECG recordings (commonly 24 to 25 hours duration) of patients with paroxysmal or persistent/permanent AF. The number of cardiac beats is around 9 million of which 59.2\% are annotated as AF. The threshold, as already mentioned in the previous section \ref{sec:entropy}, is tested from $0.0$ to $1.0$  with an increment of $0.001$. ROC curve is defined based on the metrics $Se$ and $1-Sp$, where a point on the graph is formed by the couple $(Se$; $1-Sp)$ of a specific threshold. Thus the best-case scenario, namely perfect classification, is the couple $a=(Se=1; 1-Sp=0)$, hence the best performance can be found trivially using the Euclidean distance of a generic point from the point $a$. In \reffig{zhou_img}, the best performance point $b$ is found at threshold $0.639$, with distance $0.0576$ from the perfect classification, an area under the ROC curve that is $0.9845$ and the corresponding values of $Se$, $Sp$, $PPV$ and $ACC$ are $96.14\%$, $95.73\%$, $97.03\%$ and $95.97\%$ respectively \cite{zhou2015}. In other words, a slight improvement is made compared to RRI based method Zhou, et al\cite{zhou2014}.
-
-\fig{img/roc_zhou.png}{0.9}{roc}{Receiver operating characteristic when the training set of LTAFDB database is applied with threshold values from $0.0$ to $1.0$ in increments of $0.001$. The calculated value for the area under the blue curve is $0.9845$ \cite{zhou2015}.}
-
-\subsubsection{Testing phase}
-This phase uses the threshold $0.639$ across all testing databases: AFDB, MITDB\cite{mitdb} and NSRDB\cite{nsrdb} set. A complete overview of the results of the state of art method explained and others can be found in Table \ref{table:zhou_hr_rri}.
-AFDB$^1$ is experimentation without the records \verb|00735| and \verb|03665| for which the \verb|.hea| files are not existent. While AFDB$^2$ excludes the record \verb|04936| and \verb|05091| because many incorrect manual AF annotations are contained \cite{lee2013}. 
-To be sure about experimentation, edge cases are needed. Hence dataset like MITDB which contains many coexisting various types of complex arrhythmias and NSRDB without any AF annotation, are perfect for this purpose.
-
-\begin{table}[h]
-\begin{threeparttable}
-\caption[Performance comparison of some state of the art methods.]{Classification performance of different methods based on three different testing databases \cite[p. 8]{zhou2015}.}
-\label{table:zhou_hr_rri}
-\scriptsize
-  \begin{tabularx}{\linewidth}{c c c c X c c c}
-  \toprule
-  \textbf{Method} & \textbf{Feature} & \textbf{Year} & \textbf{Database} & \multicolumn{4}{c}{\textbf{Results}} \\
-  \cline{5-8}
-  \\
-  & & & & $\mathbf{SE(\%)}$ & $\mathbf{SP(\%)}$ & $\mathbf{PPV(\%)}$ & $\mathbf{ACC(\%)}$\\
-  \midrule  
-  Zhou, et al\cite{zhou2015} & HR & 2015 & AFDB & 97.37 & 98.44 & 97.89 & 97.99\\
-  & & & AFDB$^1$ & 97.31 & 98.28 & 97.89 & 97.84 \\
-  & & & AFDB$^2$ & 98.43 & 98.46 & 97.92 & 98.45 \\
-  & & & MITDB & 97.83 & 87.41 & 47.67 & 88.51 \\
-  & & & NSRDB & NA & 99.68 & NA & NA \\
-  \hline
-  Petrênas, et al\cite{petrenas2015} & RRI & 2015 & AFDB & 97.12 & 98.28 & - & -\\
-  & & & AFDB$^1$ & 97.1 & 98.1 & - & - \\
-  & & & AFDB$^2$ & 98.0 & 98.2 & - & - \\
-  & & & MITDB & 97.8 & 86.4 & 47.67 & 88.51 \\
-  & & & NSRDB & NA & 98.6 & NA & NA \\
-  \hline
-  Zhou, et al\cite{zhou2014} & RRI & 2014 & AFDB & 96.89 & 98.25 & 97.62 & 97.67\\
-  & & & AFDB$^1$ & 96.82 & 98.06 & 97.61 & 97.50 \\
-  & & & AFDB$^2$ & 97.83 & 98.19 & 97.56 & 98.04 \\
-  & & & MITDB & 97.33 & 90.78 & 55.29 & 91.46 \\
-  & & & NSRDB & NA & 98.28 & NA & NA \\
-  \hline
-  Lee, et al\cite{lee2013} & RRI & 2014 & AFDB$^2$ & 98.22 & 97.68 & - & 97.91\\
-  & & & MITDB & 91.1 & 89.7 & - & - \\
-  & & & NSRDB & NA & 99.7 & NA & NA \\
-  \bottomrule
-\end{tabularx}
-\begin{tablenotes}
- 	\item $^1$ Records \verb|00735| and \verb|03665| excluded.
-	\item $^2$ Records \verb|04936| and \verb|05091| excluded.
-	\item ‘NA’ indicates not applicable because there is no beat with AF reference annotation in this database.
-    \end{tablenotes}
-\end{threeparttable}
-\end{table}
-
-Thus the method performs statistically better than the others \cite[p. 11]{zhou2015} with a very low computational complexity \cite[p. 14]{zhou2015}
-
-\section{Using machine learning techniques}
-The state of the art algorithm just described could be improved using machine learning (ML) techniques. To make complete experimentation, multiple ML algorithms should be used in the investigation. But first replication of Zhou, et al\cite{zhou2015} is needed.
+In this Chapter, an attempt to improve the state of the art through Machine Learning (ML) techniques is made. Specifically different algorithms are applied on datasets enriched by morphology data to detect atrial fibrillation.
 
 \subsection{State of the art replication}
-The replication was made with Python 3.7 and its most popular libraries for data science, such as Numpy and Pandas. Wfdb library to manipulate the different databases introduced in Section \ref{sec:global_introduction}.
-The core part of the work has been shown in pieces in the previous sections that explain the steps of the algorithm.
-
+Before proceeding with the actual experiment, a replication of Zhou, et al\cite{zhou2015} is needed. Unfortunately the final results don't match between the original work and the replication.
+The latter was made with Python 3.7 and the most popular libraries for data science, such as Numpy and Pandas. Wfdb library to manipulate the different databases introduced in Section \ref{sec:soa_introduction}.
+The core part of the work has been shown in pieces in Chapter \ref{sec:state_of_the_art} that explains the steps of the algorithm.
 \begin{table}[h]
 \begin{center}
 \begin{threeparttable}
@@ -157,7 +41,6 @@ The core part of the work has been shown in pieces in the previous sections that
 \end{threeparttable}
 \end{center}
 \end{table}
-
 In Table \ref{table:zhou_hr_and_unimol} the performance of the replication is reported. The predicted values were compared with an oracle. To define the matching oracle $oa_n$ of a specific record, a binary sequence $bs_k$ was used to keep track of the samples that are AF (bit 1) and non-AF (bit 0), between the peaks $R_i$ and $R_{i+1}$. The correct labels were obtained from the \verb|.atr| files. Then the percentage of AF bit in the interval $RR$ was counted,
 \begin{equation}
  \text{AF\%} = \frac{\# \text{ of ones}}{RR \text{ length}}
@@ -252,8 +135,6 @@ As already explained in \ref{sec:entropy}, $hr_n$ is labelled as AF if the coars
   & reptree & 95.32 & 97.28 & 96.31 & 96.45 & 92.73 \\
   \hline
   AFDB & \textbf{replication} & 96.01 & 97.51 & 96.62 & 96.87 & 93.59 \\
-  \hline
-  AFDB & \textbf{zhou} & 97.37 & 98.44 & 97.89 & 97.99 & NA \\
   \bottomrule
 \end{tabular}
 \begin{tablenotes}
@@ -306,8 +187,6 @@ The explicit and encoded datasets of the previous experimentation were used as a
   & reptree & 89.86 & 95.23 & 93.94 & 92.81 & 85.49 \\
   \hline
   AFDB$^1$ & \textbf{replication} & 95.94 & 97.23 & 96.61 & 96.65 & 93.23 \\
-  \hline
-  AFDB & \textbf{zhou} & 97.37 & 98.44 & 97.89 & 97.99 & NA \\
   \bottomrule
 \end{tabular}
 \begin{tablenotes}
@@ -360,8 +239,6 @@ Thus because of the inconsistency in the statistical margins and the increase in
   AFDB & \textbf{replication} & 96.01 & 97.51 & 96.62 & 96.87 & 93.59 \\
   \hline
   AFDB$^1$ & \textbf{replication} & 96.11 & 97.53 & 96.66 & 96.92 & 93.71 \\
-  \hline
-  AFDB & \textbf{zhou} & 97.37 & 98.44 & 97.89 & 97.99 & NA \\
   \bottomrule
 \end{tabular}
 \begin{tablenotes}
@@ -376,6 +253,108 @@ In \ref{sec:entropy} Shannon entropy has been defined on a bin with size $127$. 
 In the case of the explicit dataset, logistic in terms of $SE$ obtained a remarkable increment of $(+0.86)$. But was not enough to compete with the replica results based on $AFDB^1$. If compared with the results in Table \ref{table:zhou_unimol_explicit_encoded}, an overall slight improvement in terms of $MCC$ was achieved and the distance between the replica and the best performance algorithm reduce from $(-0.26)$ to  $(-0.19)$.
 
 As for the encoded dataset, the behaviour was quite similar to what happened in \ref{table:zhou_unimol_explicit_encoded}. In fact, \verb|j48|, \verb|ibk|, \verb|random forest| and \verb|reptree| had the same performances. But \verb|logistic| and \verb|adaboostm1| added nothing more to the replica. In terms of $MCC$ compared to the replica, the quartet of algorithms had an increment of around $(+0.08)$. All in all, the experiment without removing the 126 transient beats, obtained greater increments equal to $(+0.14)$ in terms of $MCC$.
+
+\section{Improving specific aspects in AF detection}
+After applying the above techniques, it is necessary to choose the experiment that had the best performance that is that on the encoded entropy dataset. The final conclusions on global prediction can be drawn by observing the Table \ref{table:overview_global_encoded} based on the mentioned dataset. The AFDB data set consists of 25 records, 12 of which were classified better than the state of the art algorithm. As regards the 3 records not reported in the table, there were neither improvements nor worsening compared to the basic version. Generally, however, there is a slight improvement in the number of correctly classified fibrillating beats.
+
+\begin{table}[h]
+\begin{center}
+\begin{threeparttable}
+\caption{Records with specific improvements of classification based on encoded entropy experiment.}
+\label{table:overview_global_encoded}
+\scriptsize
+  \begin{tabular}{c c c c c c c}
+  \toprule
+  \textbf{Record} & \textbf{Algorithm} & \multicolumn{4}{c}{\textbf{Confusion matrix}} & \textbf{Surpasses}\\
+  \cline{3-6}
+  \\
+  & & $\mathbf{TP}$ & $\mathbf{TN}$ & $\mathbf{FP}$ & $\mathbf{FN}$\\
+  \midrule  
+  05261 & j48 \& others & \textbf{771} & 43888 & 702 & \textbf{163} & $Se$\\
+  & Zhou et, al & 654 & 44217 & 380 & 280 & -\\
+  \hline
+  07879$^*$ & j48 \& others & \textbf{39995} & 16447 & 102 & \textbf{40} & $Se, Acc, Mcc$ \\
+  & logistic, bayesnet, adaboostm1 & \textbf{39945} & 16487 & 62 & \textbf{90}  & $Se$\\
+  & Zhou et, al & 39943 & 16496 & 60 & 92 & -\\
+  \hline
+  06453$^*$ & All & \textbf{126} & \textbf{34288} & \textbf{94} & \textbf{319} & All metrics \\
+  & Zhou et, al & 117 & 34272 & 117 & 328 & -\\
+  \hline
+  04043$^*$ & j48 \& others & \textbf{9170} & 44060 & 3211 & \textbf{5464} & $Se, Acc, Mcc$ \\
+  & logistic, bayesnet, adaboostm1 & \textbf{8693} & 44211 & 3060 & \textbf{5941} & $Se, Acc, Mcc$ \\
+  & Zhou et, al & 8544 & 44321 & 2957 & 6090 & - \\
+  \hline
+  05091 & j48 \& others & \textbf{4} & 36615 & 12 & \textbf{137} & $Se$ \\
+  & Zhou et, al & 0 & 36634 & 0 & 141 & - \\
+  \hline
+  00735 & logistic, adaboostm1 & 275 & 39840 & \textbf{51} & 57 & $Sp, Ppv$ \\
+  & Zhou et, al & 277 & 39846 & 52 & 55 & - \\
+  \hline
+  03665 & j48 \& others & \textbf{10995} & 41394 & 304 & \textbf{62} & $Se$ \\
+  & Zhou et, al & 10985 & 41416 & 289 & 72 & - \\
+  \hline
+  08405$^*$ & All & \textbf{45019} & 13743 & 8 & \textbf{76} & $Se, Acc, Mcc$ \\
+  & Zhou et, al & 45003 & 13758 & 0 & 92 & - \\
+  \hline
+  06995$^*$ & j48 \& others & \textbf{27028} & 25553 & 2110 & \textbf{488} & $Se$ \\
+  & logistic, adaboostm1 & \textbf{26975} & \textbf{25645} & \textbf{2018} & \textbf{541} & $All$ \\
+  & Zhou et, al & 26961 & 25640 & 2023 & 562 & - \\
+  \hline
+  07910 & j48 \& others & \textbf{6504} & 29589 & 230 & \textbf{266} & $Se$ \\
+  & Zhou et, al & 6499 & 29722 & 104 & 271 & - \\
+  \hline
+  04908$^*$ & j48 \& others & \textbf{5526} & \textbf{55240} & \textbf{700} & \textbf{284} & $All$ \\
+  & logistic & 5446 & \textbf{55279} & \textbf{661} & 364 & $Sp, Ppv, Acc, Mcc$ \\
+  & Zhou et, al & 5491 & 55055 & 892 & 319 & - \\
+  \hline
+  08455$^*$ & j48 \& others & \textbf{44189} & 15238 & 40 & \textbf{75} & $Se, Acc, Mcc$ \\
+  & Zhou et, al & 44103 & 15246 & 39 & 161 & - \\
+  \hline
+  05121 & j48 \& others & \textbf{32592} & \textbf{14976} & \textbf{1135} & 1168 & $Sp, Ppv$ \\
+  & logistic, adaboostm1 & 32589 & \textbf{14986} & \textbf{1125} & 1171 & $Sp, Ppv$ \\
+  & bayesnet & 32589 & \textbf{14981} & \textbf{1130} & 1171 & $Sp, Ppv$ \\
+  & Zhou et, al & 32689 & 14923 & 1195 & 1071 & - \\
+  \hline
+  08378 & bayesnet, adaboostm1 & 10996 & 33886 & \textbf{142} & 481 & $Sp, Ppv$ \\
+  & Zhou et, al & 11008 & 33891 & 144 & 469 & - \\
+  \hline
+  04015$^*$ & j48 \& others & \textbf{499} & 40714 & 2756 & \textbf{26} & $Se, Mcc$ \\
+  & logistic, adaboostm1 & 483 & 40807 & \textbf{2663} & 42 & $Sp, Ppv, Mcc$ \\
+  & bayesnet & \textbf{496} & 40771 & 2699 & \textbf{29} & $Se, Ppv, Mcc$ \\
+  & Zhou et, al & 485 & 40812 & 2665 & 40 & - \\
+  \hline
+  06426 & logistic, adaboostm1 & 52014 & \textbf{799} & \textbf{1220} & 1112 & $Sp, Ppv$ \\
+  & Zhou et, al & 52095 & 796 & 1223 & 1038 & - \\
+  \hline
+  04048$^*$ & j48 \& others & \textbf{632} & 38909 & 202 & \textbf{181} & $Se, Ppv, Acc, Mcc$ \\
+  & bayesnet & \textbf{556} & 38930 & 181 & \textbf{257} & $Se, Acc, Mcc$ \\
+  & Zhou et, al & 419 & 38982 & 136 & 394 & - \\
+  \hline
+  04936$^*$ & All & \textbf{33559} & 12086 & 1869 & \textbf{6122} & $Se, Acc, Mcc$ \\
+  & Zhou et, al & 32662 & 12362 & 1600 & 7019 & - \\
+  \hline
+  04126$^*$ & j48 \& others & \textbf{3151} & 38664 & 893 & \textbf{142} & $Se, Acc, Mcc$ \\
+  & logistic, bayesnet, adaboostm1 & 3017 & 38789 & \textbf{768} & 276 & $Sp$ \\
+  & Zhou et, al & 3021 & 38795 & 769 & 272 & - \\
+  \hline
+  07162 & All & 39198 & 0 & 0 & \textbf{90} & $Se, Acc$ \\
+  & Zhou et, al & 39198 & 0 & 0 & 97 & - \\
+  \hline
+  07859 & All & 61789 & 0 & 0 & \textbf{93} & $Se, Acc$ \\
+  & Zhou et, al & 61789 & 0 & 0 & 100 & - \\
+  \hline
+  08219$^*$ & j48 \& others & \textbf{12953} & 42511 & 2578 & \textbf{1241} & $Se, Ppv, Acc, Mcc$ \\
+  & logistic, bayesnet, adaboostm1 & 12643 & \textbf{42605} & \textbf{2484} & 1551 & $Sp, Ppv, Acc, Mcc$ \\
+  & Zhou et, al & 12645 & 42555 & 2541 & 1549 & - \\
+  \bottomrule
+\end{tabular}
+\begin{tablenotes}
+	\item $^*$ record classified better than the state of the art.
+	\item NOTE: \verb|j48|, \verb|ibk|, \verb|random forest| and \verb|reptree| had the same performances. First one is reported.
+    \end{tablenotes}
+\end{threeparttable}
+\end{center}
+\end{table}
 
 \section{Further developments}
 Further developments of the work could be more investigations on the gap of beats between the reply and what is reported on the reference paper. It is also necessary to understand what the artefact is between the performance of the replica and that of the paper.
