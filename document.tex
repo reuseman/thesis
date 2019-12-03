@@ -10,11 +10,14 @@
 \begin{document}
 \frontmatter
 \pagestyle{empty}
+%\input{./tex/first_page}
 \input{./tex/front}
 %\input{./tex/dedication}
 \input{./tex/acknowledgements}
 \input{./tex/abstract}    
 {\tableofcontents \let\cleardoublepage\clearpage \listoffigures \let\cleardoublepage\clearpage \listoftables}
+\blankpage
+
 \mainmatter
 \pagestyle{fancy}
 \fancyhf{}
@@ -24,6 +27,7 @@
 \input{./tex/introduction}
 \input{./tex/state_of_the_art}
 \input{./tex/global_prediction}
+\blankpage
 \input{./tex/local_prediction}
 
 \backmatter
