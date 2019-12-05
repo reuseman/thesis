@@ -1,19 +1,27 @@
-\chapter{Local prediction}
+\chapter{An adaptive and local prediction approach}
 \label{sec:local}
+Another experiment is attempted to see if it is possible to improve Zhou et, al algorithm using only one characteristic, the threshold of entropy that is variable and adapts to the local characteristics of the patient. A threshold that starts from a standard value, but that over time, when a fibrillation event occurs, adapts to reach an optimal threshold that improves the accuracy of the detection of AF compared to the default threshold.
 
-\section{Introduction}
-A further trial to improve the performances of the algorithm analysed in Chapter \ref{sec:state_of_the_art}, is to carry out a local prediction approach during the training. That is, instead of finding the discriminating threshold that works for all patients, a specific threshold per patient is found. Afterwards, the records are grouped according to a common criteria. The reason behind this is the physiological difference among each patient, which can lead to the use of an unsuitable discriminatory threshold.
+\section{Approach description}
+A \verb|gls| function was used, which fits a linear model using generalized least squares, to find the local optimal threshold. It was performed on an arbitrary observation window of 30 beats with AF and on a window, used in the literature, of 126 AF beats.
 
-\section{Finding threshold}
-The procedure to complete the task consists in brutally testing all the thresholds in the range $[0.0,1.0]$ with an increase of $0.001$. But unlike what was done in Section \ref{sec:entropy}, the method acts on a single record of a specific patient. The choice of the right threshold among all the others, can be done by optimizing different parameters and metrics (equation \ref{eq:metrics} for reference).
+\section{Empirical evaluation}
+This section describes the datasets and the model used to make predictions. Finally, results obtained are shown.
 
-\subsection{Receiver operating characteristic}
-In the first experiment, the ROC was employed to optimize in the same way as Zhou, et al\cite{zhou2015} did, but for every single record. To decide if the performances were remarkable, the MCC metric was calculated on the total of the values of the confusion matrix. Then it was compared with the replica realized for the global prevision. On the AFDB dataset the final MCC was $90.05\%$ while the replica's one was $93.59\%$ and the average of all the thresholds was $0.461$. Instead on the AFDB dataset without the 126 transient values the MCC was $90.12\%$ while the one of the replica was $93.71\%$ and the average threshold $0.522$. In both cases, the optimisation carried out was not sufficient to achieve good performance.
+\subsection{Design \& Context}
+A dataset to perform a leave one person out experiment was made. It was formed by groups of first $30$ beats with atrial fibrillation and their optimal threshold of belonging record. The latter was the label at the base of the supervised learning. A \verb|gls| function was used, which fits a linear model using generalized least squares. Unfortunately, most of the predicted thresholds were really similar. A further experiment with a time window of 126 heartbeats, a length equal to the state of the art window, was performed but led to almost similar results. Subsequently, validation was carried out, calculating the difference between the above thresholds and the optimal thresholds.
+
+\subsection{Results}
+\subsubsection{Finding the optimal thresholds}
+The procedure to complete the task consists of brutally testing all the thresholds in the range $[0.0,1.0]$ with an increase of $0.001$ for every single record. The choice of the right threshold among all the others can be done by optimizing different parameters and metrics (equation \ref{eq:metrics} for reference).
+
+\paragraph{Receiver operating characteristic}
+The ROC was employed to optimize in the same way as Zhou, et al\cite{zhou2015} did, but for every single record. To decide if the performances were remarkable, the MCC metric was calculated on the total of the values of the confusion matrix. Then it was compared with the replica realized for the global prevision. On the AFDB dataset the final MCC was $90.05\%$ while the replica's one was $93.59\%$ and the average of all the thresholds was $0.461$. Instead, on the AFDB dataset without the 126 transient values, the MCC was $90.12\%$ while the one of the replica was $93.71\%$ and the average threshold $0.522$. In both cases, the optimisation carried out was not sufficient to achieve good performance.
 \fig{img/roc_local_05091.png}{0.9}{local_roc}{Example of optimisation through ROC. For the record $05091$, the best performance is obtained with threshold $0.046$. $Se=0.90$ and $Sp=0.82$.} 
 
-\subsection{Maximizing the number of TP and TN}
+\paragraph{Maximizing the number of TP and TN}
 \label{sec:max_accuracy}
-In this trial the optimization was directed on the number of beats correctly classified, i.e., true positives and true negatives. That is to find that threshold with the highest accuracy ($ACC$). This method on the AFDB dataset yield to a aggregate MCC of $95.00\%$ compared to the $93.59\%$ of the replica. In this case the threshold average lied around $0.578$. On the other hand, the AFDB reduced of the 126 transient beats, had a MCC of $95.04\%$ while the replica $93.71\%$. The average of the threshold was $0.637$. This method was indeed the best one (Table \ref{table:local_threshold_summary}).
+In this trial, the optimization was directed on the number of beats correctly classified, i.e., true positives and true negatives. That is to find that threshold with the highest accuracy ($ACC$). This method on the AFDB dataset yield to an aggregate MCC of $95.00\%$ compared to the $93.59\%$ of the replica. In this case, the threshold average lied around $0.578$. On the other hand, the AFDB reduced of the 126 transient beats, had an MCC of $95.04\%$ while the replica $93.71\%$. The average of the threshold was $0.637$. This method was indeed the best one (Table \ref{table:local_threshold_summary}) and resulting thresholds from the records without the transient beats were used as labels for the dataset.
 \begin{table}[h]
 \begin{center}
 \begin{threeparttable}
@@ -41,77 +49,12 @@ In this trial the optimization was directed on the number of beats correctly cla
 \end{center}
 \end{table}
 
-\section{Clustering}
-The optimal thresholds were obtained in \ref{sec:max_accuracy}, the next step to aggregate patients with a similar ECG from a physiological point of view is to create different groups, i.e. clusters. The thresholds found through the optimization of max accuracy on AFDB without the 126 transient beats was taken as reference. From here on, there are two main ways forward. 
-
-\subsection{Through numeric intuition}
-The first is to use numerical intuition. Depending on how optimization is defined, different results can be obtained. For example, taking the first value that meets a specific criterion leads to different results than taking the last one. To be thorough in the experimentation, both methods have been reported in \ref{table:clustering} that shows the clustering. Albeit only the records where the threshold can move along a wide interval were the one that made big leap. Hence for those records, was not really important the picked up threshold, but they are still to be kept in mind because they can lead to interesting implications. The remaining records were completely independent of the method used and clung more or less to the same clusters. Especially the one in the interval $[0.4, 0.8]$ where most of the records tend to stay around those groups.
+\paragraph{Validation}
+The final validation was made by making the difference between the thresholds predicted by the GLS model and the optimal thresholds. Results reported in Table \ref{table:clustering_ml}.
 \begin{table}[h]
 \begin{center}
 \begin{threeparttable}
-\caption{Numerical clustering applied on the optimal thresholds found maximizing accuracy on AFDB without the 126 transient values. Method 1 takes the first thresholds  that meets a criteria, Method 2 takes the last one.}
-\label{table:clustering}
-\scriptsize
-  \begin{tabular}{c c c | c c c}
-  \toprule
-  \multicolumn{3}{c|}{\textbf{Method 1}} & \multicolumn{3}{c}{\textbf{Method 2}} \\
-  \cline{1-3} \cline{4-6}
-  \\
-  Cluster block & Record & Threshold & Cluster block & Record & Threshold\\
-  \midrule  
-  \multirow{2}{*}{$[0.0, 0.1)$} & 7162 & 0 & \multirow{2}{*}{$[0.1, 0.2)$} & 8215 & 0.197 \\
-  & 7859 & 0  & & 8455 & 0.199 \\
-  \cline{1-6}
-  \multirow{2}{*}{$[0.1, 0.2)$} & 8455 & 0.194 & $[0.3, 0.4)$ & 8378 & 0.354 \\
-  \cline{4-6}
-  & 8215 & 0.195 & \multirow{3}{*}{$[0.4, 0.5)$} & 7910 & 0.47 \\
-  \cline{1-3}
-  $[0.3, 0.4)$ & 8378 & 0.353 & & 4746 & 0.471\\
-  \cline{1-3}
-  \multirow{3}{*}{$[0.4, 0.5)$} & 4746 & 0.434 & & 7879 & 0.489 \\
-  \cline{4-6}
-  & 7879 & 0.456 & \multirow{4}{*}{$[0.5, 0.6)$} & 4936 & 0.514 \\
-  & 7910 & 0.47 & & 4043 & 0.515 \\
-  \cline{1-3}
-  \multirow{5}{*}{$[0.5, 0.6)$} & 4936 & 0.514 & & 5121 & 0.557 \\
-  & 4043 & 0.515  & & 6426 & 0.576 \\
-  \cline{4-6}
-  & 5121 & 0.557 & \multirow{5}{*}{$[0.6, 0.5)$} & 8219 & 0.623 \\
-  & 6426 & 0.576 & & 735 & 0.632 \\
-  & 735 & 0.583 & & 8405 & 0.632 \\
-  \cline{1-3}
-  \multirow{4}{*}{$[0.6, 0.7)$} & 5091 & 0.622 & & 7859 & 0.687 \\
-  & 8219 & 0.623  & & 4908 & 0.693 \\
-  \cline{4-6}
-  & 8405 & 0.628  & \multirow{5}{*}{$[0.7, 0.8)$} & 8434 & 0.71 \\
-  & 4908 & 0.693  & & 3665 & 0.713 \\
-  \cline{1-3}
-  \multirow{5}{*}{$[0.7, 0.8)$} & 8434 & 0.71  & & 6453 & 0.726 \\
-  & 3665 & 0.713  & & 6995 & 0.75 \\
-  & 6453 & 0.721  & & 5261 & 0.758 \\
-  \cline{4-6}
-  & 6995 & 0.75  & \multirow{2}{*}{$[0.8, 0.9)$} & 7162 & 0.803 \\
-  & 5261 & 0.758  & & 4126 & 0.899 \\
-  \cline{1-3}
-  \cline{4-6}
-  $[0.8, 0.9)$ & 4126 & 0.899 & \multirow{2}{*}{$[0.9, 1.0)$} & 4048 & 0.979 \\
-  \cline{1-3}
-  \multirow{2}{*}{$[0.9, 1.0)$} & 4048 & 0.969  & & 4015 & 0.999 \\
-  \cline{4-6}
-  & 4015 & 0.99  & $[1.0, -)$ & 5091 & 1 \\
-  \bottomrule
-\end{tabular}
-\end{threeparttable}
-\end{center}
-\end{table}
-
-\subsection{Through machine learning}
-The second way to find clusters is through machine learning techniques. A dataset to perform a leave one person out experiment was made. It was formed by groups of first $30$ beats with atrial fibrillation and their optimal threshold of belonging record. The latter was the label at the base of the supervised learning. A \verb|gls| function was used, which fits a linear model using generalized least squares. Unfortunately most of the predicted thresholds were really similar (Table \ref{table:clustering_ml}), thus near the average of $0.54632782$. A further experiment with a time window of 126 heartbeats, a length equal to the state of the art window, was performed but led to almost similar results. The problem was the over-representation of thresholds in the range $[0.55, 0.65]$ as it can be seen in \reffig{histogram_prediction_local}.
-\fig{img/historam_prediction_08455.png}{0.9}{histogram_prediction_local}{Histogram of prediction for the record 08455} 
-\begin{table}[h]
-\begin{center}
-\begin{threeparttable}
-\caption{GLS function applied on a dataset with a window of the first 30 af beats. The output of the function is a threshold.}
+\caption{GLS function applied on a dataset with a window of the first 30 AF beats. The output of the function is a threshold.}
 \label{table:clustering_ml}
 \scriptsize
   \begin{tabular}{c c c c}
@@ -149,5 +92,74 @@ The second way to find clusters is through machine learning techniques. A datase
 \end{center}
 \end{table}
 
-\section{Further developments}
-An overall good method was not found during the local prediction analysis. Future developments should aim to find a model with remarkable performance. For example, possible methods that might prove interesting are genetic algorithms that are more complex than linear regression. Subsequently, certain thresholds should be applied to certain groups of records, i.e. patients with a common physiology, and thus better performance should be achieved. 
+\section{Final remarks}
+For a large number of records, the prediction approaches the optimal threshold. For others, however, there is a significant difference, so other algorithms must be used. Possible methods that might prove interesting are genetic algorithms that are more complex than linear regression.
+
+%\subsection{Through numeric intuition}
+%The first is to use numerical intuition. Depending on how optimization is defined, different results can be obtained. For example, taking the first value that meets a specific criterion leads to different results than taking the last one. To be thorough in the experimentation, both methods have been reported in \ref{table:clustering} that shows the clustering. Albeit only the records where the threshold can move along a wide interval were the one that made big leap. Hence for those records, was not really important the picked up threshold, but they are still to be kept in mind because they can lead to interesting implications. The remaining records were completely independent of the method used and clung more or less to the same clusters. Especially the one in the interval $[0.4, 0.8]$ where most of the records tend to stay around those groups.
+%\begin{table}[h]
+%\begin{center}
+%\begin{threeparttable}
+%\caption{Numerical clustering applied on the optimal thresholds found maximizing accuracy on AFDB without the 126 transient values. Method 1 takes the first thresholds  that meets a criteria, Method 2 takes the last one.}
+%\label{table:clustering}
+%\scriptsize
+%  \begin{tabular}{c c c | c c c}
+%  \toprule
+%  \multicolumn{3}{c|}{\textbf{Method 1}} & \multicolumn{3}{c}{\textbf{Method 2}} \\
+%  \cline{1-3} \cline{4-6}
+%  \\
+%  Cluster block & Record & Threshold & Cluster block & Record & Threshold\\
+%  \midrule  
+%  \multirow{2}{*}{$[0.0, 0.1)$} & 7162 & 0 & \multirow{2}{*}{$[0.1, 0.2)$} & 8215 & 0.197 \\
+%  & 7859 & 0  & & 8455 & 0.199 \\
+%  \cline{1-6}
+%  \multirow{2}{*}{$[0.1, 0.2)$} & 8455 & 0.194 & $[0.3, 0.4)$ & 8378 & 0.354 \\
+%  \cline{4-6}
+%  & 8215 & 0.195 & \multirow{3}{*}{$[0.4, 0.5)$} & 7910 & 0.47 \\
+%  \cline{1-3}
+%  $[0.3, 0.4)$ & 8378 & 0.353 & & 4746 & 0.471\\
+%  \cline{1-3}
+%  \multirow{3}{*}{$[0.4, 0.5)$} & 4746 & 0.434 & & 7879 & 0.489 \\
+%  \cline{4-6}
+%  & 7879 & 0.456 & \multirow{4}{*}{$[0.5, 0.6)$} & 4936 & 0.514 \\
+%  & 7910 & 0.47 & & 4043 & 0.515 \\
+%  \cline{1-3}
+%  \multirow{5}{*}{$[0.5, 0.6)$} & 4936 & 0.514 & & 5121 & 0.557 \\
+%  & 4043 & 0.515  & & 6426 & 0.576 \\
+%  \cline{4-6}
+%  & 5121 & 0.557 & \multirow{5}{*}{$[0.6, 0.5)$} & 8219 & 0.623 \\
+%  & 6426 & 0.576 & & 735 & 0.632 \\
+%  & 735 & 0.583 & & 8405 & 0.632 \\
+%  \cline{1-3}
+%  \multirow{4}{*}{$[0.6, 0.7)$} & 5091 & 0.622 & & 7859 & 0.687 \\
+%  & 8219 & 0.623  & & 4908 & 0.693 \\
+%  \cline{4-6}
+%  & 8405 & 0.628  & \multirow{5}{*}{$[0.7, 0.8)$} & 8434 & 0.71 \\
+%  & 4908 & 0.693  & & 3665 & 0.713 \\
+%  \cline{1-3}
+%  \multirow{5}{*}{$[0.7, 0.8)$} & 8434 & 0.71  & & 6453 & 0.726 \\
+%  & 3665 & 0.713  & & 6995 & 0.75 \\
+%  & 6453 & 0.721  & & 5261 & 0.758 \\
+%  \cline{4-6}
+%  & 6995 & 0.75  & \multirow{2}{*}{$[0.8, 0.9)$} & 7162 & 0.803 \\
+%  & 5261 & 0.758  & & 4126 & 0.899 \\
+%  \cline{1-3}
+%  \cline{4-6}
+%  $[0.8, 0.9)$ & 4126 & 0.899 & \multirow{2}{*}{$[0.9, 1.0)$} & 4048 & 0.979 \\
+%  \cline{1-3}
+%  \multirow{2}{*}{$[0.9, 1.0)$} & 4048 & 0.969  & & 4015 & 0.999 \\
+%  \cline{4-6}
+%  & 4015 & 0.99  & $[1.0, -)$ & 5091 & 1 \\
+%  \bottomrule
+%\end{tabular}
+%\end{threeparttable}
+%\end{center}
+%\end{table}
+%
+%\subsection{Through machine learning}
+%The second way to find clusters is through machine learning techniques. A dataset to perform a leave one person out experiment was made. It was formed by groups of first $30$ beats with atrial fibrillation and their optimal threshold of belonging record. The latter was the label at the base of the supervised learning. A \verb|gls| function was used, which fits a linear model using generalized least squares. Unfortunately most of the predicted thresholds were really similar (Table \ref{table:clustering_ml}), thus near the average of $0.54632782$. A further experiment with a time window of 126 heartbeats, a length equal to the state of the art window, was performed but led to almost similar results. The problem was the over-representation of thresholds in the range $[0.55, 0.65]$ as it can be seen in \reffig{histogram_prediction_local}.
+%\fig{img/historam_prediction_08455.png}{0.9}{histogram_prediction_local}{Histogram of prediction for the record 08455} 
+%
+%
+%\section{Further developments}
+%An overall good method was not found during the local prediction analysis. Future developments should aim to find a model with remarkable performance. For example, possible methods that might prove interesting are genetic algorithms that are more complex than linear regression. Subsequently, certain thresholds should be applied to certain groups of records, i.e. patients with a common physiology, and thus better performance should be achieved. 

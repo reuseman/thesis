@@ -12,9 +12,9 @@
 \pagestyle{empty}
 %\input{./tex/first_page}
 \input{./tex/front}
-%\input{./tex/dedication}
+\input{./tex/dedication}
 \input{./tex/acknowledgements}
-\input{./tex/abstract}    
+%\input{./tex/abstract}    
 {\tableofcontents \let\cleardoublepage\clearpage \listoffigures \let\cleardoublepage\clearpage \listoftables}
 \blankpage
 
@@ -25,10 +25,12 @@
 \fancyhead[RE]{\leftmark}
 \fancyfoot[C]{\thepage}
 \input{./tex/introduction}
+\blankpage
 \input{./tex/state_of_the_art}
 \input{./tex/global_prediction}
-\blankpage
 \input{./tex/local_prediction}
+\blankpage
+\input{./tex/conclusions}
 
 \backmatter
 \bibliography{./tex/reference.bib}

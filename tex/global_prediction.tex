@@ -1,14 +1,37 @@
-\chapter{Global prediction}
+
+\chapter{Improving global prediction with morphological features}
 \label{sec:global}
+In this chapter is shown how the work of Zhou et, al was improved using machine learning methods on datasets enriched with morphological features.
 
-\section{Introduction}
-\label{sec:global_introduction}
-In this Chapter, an attempt to improve the state of the art through Machine Learning (ML) techniques is made. Specifically different algorithms are applied on datasets enriched by morphology data to detect atrial fibrillation.
+\section{Approach description}
+Several types of data sets have been constructed by enriching Shannon's entropy with a custom entropy, the Fourier transform of Fourier and the AR coefficients. Subsequently, a model was used to classify beats into beats with or without atrial fibrillation.
 
-\subsection{State of the art replication}
-Before proceeding with the actual experiment, a replication of Zhou, et al\cite{zhou2015} is needed. Unfortunately the final results don't match between the original work and the replication.
-The latter was made with Python 3.7 and the most popular libraries for data science, such as Numpy and Pandas. Wfdb library to manipulate the different databases introduced in Section \ref{sec:soa_introduction}.
-The core part of the work has been shown in pieces in Chapter \ref{sec:state_of_the_art} that explains the steps of the algorithm.
+\subsection{Features description}
+Various features were used to provide information on rhythm and morphology. The work is based on the state of the art, so the Shannon entropy of Zhou et, al was used as the first rhythmic feature. It was employed in two different ways, by using explicitly the entropy itself or by using the explicit entropy compared with the discrimination threshold that gives back a binary classification ($0$, $1$), i.e. the encoded version. Then a tailor-made entropy $te_n$ was added with an observation window of 10 beats, defined in the following two-step:\\
+\textbf{1 step}. Let $hr_n$ be the heartbeat rate sequence. Filter the $hr_n$ sequence by labelling beat $1$ if is stable otherwise $0$ or $2$:\\
+\begin{equation}
+\mathrm{x_n} = \begin{cases}
+	0, & \text{if } hr_n \le 50 \\
+	1, & \text{if } 50 < hr_n < 120 \\
+    2,              & \text{otherwise} 
+\end{cases}
+\end{equation}
+\textbf{2 step}. Count number of stable beats ($1$) in a window of 10 elements $[x_{n-9}, x_{n}]$:\\
+\begin{equation}
+\mathrm{te_n} = \sum_{i=n-9}^{n} [x_i=1]
+\end{equation}
+As regards morphological attributes, the Fast Fourier Transform and the Autoregressive model's coefficient estimated through Yule-Walker, were applied on two blocks obtained from an ECG's $RR$ segment divided in half. The former with an output of 16 values, the latter with 4 values. Finally, the label that represents the presence or absence of atrial fibrillation. Multiple datasets with a subset of attributes were used, of which the most enriched with 43 features.
+
+\subsection{Machine learning techniques}
+\label{sec:ml_techniques}
+To perform exhaustive experimentation, it was thought to take from each family of algorithms of machine learning, one and only one algorithm. More specifically: \verb|j48|, \verb|ibk|, \verb|logistic|, \verb|bayesnet|, \verb|adaboostm1|, \verb|randomforest|, \verb|reptree|. Subsequently, the training and testing phases were carried out through a Leave One Person Out (L1PO) methodology, i.e. train on $n-1$ records, test on $1$, repeated for each of the $n$ records in the database.
+ 
+\section{Empirical evaluation}
+This section describes the database used and highlights the results of the replica of Zhou et, al used for comparison. Finally, the results obtained from the experiments with Machine learning are shown.
+
+\subsection{Design \& Context}
+The experiment was conducted on MIT-BIH Atrial Fibrillation Database \cite{afdb}, a supervised dataset, which was labelled by experienced cardiologists and made available to the public from PhysioNet \cite{physionet}. The database includes $25$ long-term ECG recordings of patients with atrial fibrillation, which is mostly paroxysmal. Each record is $10$ hours in duration and contains two ECG signals sampled at 250 samples per second with $12-bit$ resolution over a range of $\pm 10$ millivolts. The signals files \verb|.dat| are available only on 23 records. But all of the records have \verb|.atr| and \verb|.qrs| annotations files. The former contains information about the kind of rhythm: atrial fibrillation, atrial flutter, junctional rhythm or other rhythms. The latter contains unaudited beat prepared using an automated detector and have not been corrected manually. In some cases, manually corrected beat annotations files \verb|.qrsc| are present.
+The different models taken as reference in Section \ref{sec:ml_techniques} were applied through Weka and the results obtained compared with a replica of Zhou et, al. 
 \begin{table}[h]
 \begin{center}
 \begin{threeparttable}
@@ -41,22 +64,10 @@ The core part of the work has been shown in pieces in Chapter \ref{sec:state_of_
 \end{threeparttable}
 \end{center}
 \end{table}
-In Table \ref{table:zhou_hr_and_unimol} the performance of the replication is reported. The predicted values were compared with an oracle. To define the matching oracle $oa_n$ of a specific record, a binary sequence $bs_k$ was used to keep track of the samples that are AF (bit 1) and non-AF (bit 0), between the peaks $R_i$ and $R_{i+1}$. The correct labels were obtained from the \verb|.atr| files. Then the percentage of AF bit in the interval $RR$ was counted,
-\begin{equation}
- \text{AF\%} = \frac{\# \text{ of ones}}{RR \text{ length}}
-\end{equation}
-In order to be able to carry out as complete trial as possible, the oracle $oa_n$ was defined based on the percentage in three different ways:
-\begin{itemize}
-\item Method $A$: $oa_n$ is AF $\iff AF\% = 1$, else non-AF
-\item Method $B$: $oa_n$ is AF $\iff AF\% > 0.5$, else non-AF
-\item Method $C$: $oa_n$ is $AF\%$
-\end{itemize}
-In method $C$ $584$ beats were not classified, because of hybrids (not $1$ and not $0$). In Table \ref{table:replication_error} the number of AF and non-AF beats classified per method are shown. An artefact was introduced in the implementation of the algorithm or the definition of the oracle. Further investigation is needed, but the difference between the methods applied to the same database is negligible.
-%\inputpython{code/oracle.py}{1}{29}
 \begin{table}
 \begin{center}
 \begin{threeparttable}
-\caption{Number of beats comparison between state of the art and replication.}
+\caption{The number of beats comparison between state of the art and replication.}
 \label{table:replication_error}
 \scriptsize
   \begin{tabular}{c c c c c c}
@@ -75,33 +86,120 @@ In method $C$ $584$ beats were not classified, because of hybrids (not $1$ and n
 \end{threeparttable}
 \end{center}
 \end{table}
+In Table \ref{table:zhou_hr_and_unimol} the performance of the replication is reported. The predicted values were compared with an oracle. To define the matching oracle $oa_n$ of a specific record, a binary sequence $bs_k$ was used to keep track of the samples that are AF (bit 1) and non-AF (bit 0), between the peaks $R_i$ and $R_{i+1}$. The correct labels were obtained from the \verb|.atr| files. Then the percentage of AF bit in the interval $RR$ was counted,
+\begin{equation}
+ \text{AF\%} = \frac{\# \text{ of ones}}{RR \text{ length}}
+\end{equation}
+In order to be able to carry out as complete trial as possible, the oracle $oa_n$ was defined based on the percentage in three different ways:
+\begin{itemize}
+\item Method $A$: $oa_n$ is AF $\iff AF\% = 1$, else non-AF
+\item Method $B$: $oa_n$ is AF $\iff AF\% > 0.5$, else non-AF
+\item Method $C$: $oa_n$ is $AF\%$
+\end{itemize}
+In method $C$ $584$ beats were not classified, because of hybrids (not $1$ and not $0$). In Table \ref{table:replication_error} the number of AF and non-AF beats classified per method are shown. An artefact was introduced in the implementation of the algorithm or the definition of the oracle. Further investigation is needed, but the difference between the methods applied to the same database is negligible. \\
+Method $B$ on the corrected AFDB was the base of the experiment.
 
-\section{Applying machine learning}
-During this phase, machine learning algorithms were applied on enriched feature datasets using Weka 3.8. Method $B$  on the corrected AFDB is the base of the experiment. Furthermore, to make the comparison more immediate, Matthews correlation coefficient (MCC), a measure of the quality of binary classification, was introduced
+\subsection{Results}
+The results shown in this section were based on the dataset which always contained one of the two entropies from the state of the art and the custom-made entropy. Besides, FFT is added and when highlighted also the coefficients AR. Furthermore, to make the comparison between results more immediate, Matthews correlation coefficient (MCC), a measure of the quality of binary classification, was introduced
 \begin{equation}
 \mathrm{MCC}=\frac{TP \times TN-FP \times FN}{\sqrt{(TP+FP)(TP+FN)(TN+FP)(TN+FN)}}
 \end{equation}
-From here on, bespoke entropy $be_n$ is introduced on each the dataset and is defined as follows. Let $hr_n$ be the heartbeat rate sequence. \\
-\textbf{1 step}. Filter the $hr_n$ sequence by labelling beat $1$ if is stable otherwise $0$ or $2$:\\
-\begin{equation}
-\mathrm{x_n} = \begin{cases}
-	0, & \text{if } hr_n \le 50 \\
-	1, & \text{if } 50 < hr_n < 120 \\
-    2,              & \text{otherwise} 
-\end{cases}
-\end{equation}
-\textbf{2 step}. Count number of stable beats ($1$) in a window of 10 elements $[x_{n-9}, x_{n}]$:\\
-\begin{equation}
-\mathrm{be_n} = \sum_{i=n-9}^{n} [x_i=1]
-\end{equation}
-
-\subsubsection{Explicit and encoded entropy dataset}
-As already explained in \ref{sec:entropy}, $hr_n$ is labelled as AF if the coarser entropy meets or exceeds a discrimination optimal threshold equal to 0.639. This will be referred as encoded entropy, while the value itself of the Shannon entropy is the explicit entropy. 
+\paragraph{Overall results with morphology}
+Table \ref{table:zhou_unimol_fft_ar} shows final results of the process. First clarification to do is that some of the initial algorithms were removed for performance issues.\\
+On the explicit dataset with FFT, the \verb|logistic| tended to find a great number of true positives and in this case, it reached its best performance in terms of $SE$ that was equal to $97.00\%$, facilitated by a dataset richer in information.\\
+On the encoded FFT dataset, the state of the art is exceeded with an increment in terms of $MCC$ equal to $(+0.06)$ with the \verb|adaboostm1|.\\
+In the last case, coefficients of the autoregressive model were used in addition to FFT over the explicit dataset. A general increment over the explicit FFT, in the worst-performing algorithms was achieved, but the \verb|logistic| decreased of $(-0.21)$ in terms of $MCC$ and the \verb|adaboostm1| remained completely unchanged.\\
+\paragraph{Specific results with morphology}
+Tables \ref{table:encoded_fft_1}, \ref{table:encoded_fft_2} and \ref{table:encoded_fft_3} show the results per record for the dataset based on encoded entropy with FFT. If the total results represent a marginal increase, then with the results per record it is possible to perceive the improvement. The number of records that improve over the Zhou et, al, was $8/23$ in terms of $MCC$. The number of increments in term of $SE$ was $14/23$ while for the $SP$ the increment was on $12/23$ records. Even if when there were increments on the first metric, the number of algorithms that can better classify the true positives was higher than in the case of the second metric. To finish the number of records without any increase in performance was equal to $4/23$.\\
+In the case of the dataset based on explicit entropy with FFT the improvements over Zhou et, al in terms of $MCC$, $SE$, $SP$ are respectively $13/23$, $22/23$ and $11/23$. There is only one record without any improvement. \\
+For the last case, the dataset based on explicit entropy with FFT and AR coefficients, the results in terms of $MCC$, $SE$, $SP$ are respectively $14/23$, $22/23$ and $13/23$. An increment compared to the version without AR coefficients.
 
 \begin{table}[h]
 \begin{center}
 \begin{threeparttable}
-\caption{Machine learning algorithms applied on dataset with explicit and encoded entropy, compared with the replication of Zhou and Zhou, et al \cite{zhou2015} itself.}
+\caption{Machine learning algorithms applied on the dataset with Fast Fourier Transform and AR coefficients, compared with the replication of Zhou and Zhou, et al \cite{zhou2015} itself.}
+\label{table:zhou_unimol_fft_ar}
+\scriptsize
+  \begin{tabular}{c c c c c c c}
+  \toprule
+  \textbf{Dataset} & \textbf{Algorithm} & \multicolumn{5}{c}{\textbf{Results}} \\
+  \cline{3-7}
+  \\
+  & & $\mathbf{SE(\%)}$ & $\mathbf{SP(\%)}$ & $\mathbf{PPV(\%)}$ & $\mathbf{ACC(\%)}$ & $\mathbf{MCC(\%)}$\\
+  \midrule  
+  Explicit FFT & j48 & 84.38 & 95.48 & 93.88 & 90.47 & 80.93 \\ 
+  & logistic & \textbf{97.00} & 95.73 & 94.92 & 96.30 & 92.56 \\
+  & adaboostm1 & 95.49 & 97.06 & 96.39 & 96.35 & 92.63 \\
+  & randomforest & 88.78 & 96.82 & 95.83 & 93.19 & 86.36 \\
+  & reptree &  84.82 & 95.06 & 93.39 & 90.44 & 80.82 \\
+  \hline
+  Encoded FFT & j48 & 89.01 & 93.36 & 91.68 & 91.40 & 82.61 \\
+  & logistic & \textbf{96.27} & 96.61 & 95.89 & 96.46 & 92.85 \\
+  & adaboostm1 & \textbf{95.97} & \textbf{97.26} & \textbf{96.65} & \textbf{96.68} & \textbf{93.29} \\
+  & randomforest & 92.44 & 94.95 & 93.78 & 93.82 & 87.51 \\
+  & reptree  & 90.85 & 93.40 & 91.89 & 92.25 & 84.34 \\
+  \hline
+  Explicit FFT with AR & j48 & 86.74 & 94.96 & 93.40 & 91.25 & 82.40 \\
+  & logistic & \textbf{96.85} & 95.66 & 94.83 & 96.19 & 92.35 \\
+  & adaboostm1 & 95.49 & 97.06 & 96.39 & 96.35 & 92.63 \\
+  & randomforest & 92.30 & 97.18 & 96.42 & 94.98 & 89.89 \\
+  & reptree & 89.86 & 95.23 & 93.94 & 92.81 & 85.49 \\
+  \hline
+  AFDB$^1$ & \textbf{replication} & 95.94 & 97.23 & 96.61 & 96.65 & 93.23 \\
+  \bottomrule
+\end{tabular}
+\begin{tablenotes}
+	\item $^1$ Records \verb|00735| and \verb|03665| excluded.
+ 	\item ‘NA’ indicates not applicable because there the metric is not offered by the reference \cite{zhou2015}.
+    \end{tablenotes}
+\end{threeparttable}
+\end{center}
+\end{table}
+
+\section{Most significant features}
+\label{sec:significant_features}
+An analysis to identify and evaluate the goodness of the attributes was carried out on the dataset with explicit entropy and AR coefficient and FFT. The results of the analysis of the Principal components in conjunction with a Ranker searcher, are reported in Table \ref{table:attributesranking}. The first place was occupied by entropy, then a large number of components FFT and finally an AR coefficient can be found. All the FFT and AR coefficients on block number 2. The others feature were not reported, because of the low-rank score.
+\begin{table}[h]
+\begin{center}
+\begin{threeparttable}
+\caption{Most significant features on the dataset based on entropy with FFT and AR coefficients. Rank found with correlation attribute evaluation.}
+\label{table:attributesranking}
+\scriptsize
+  \begin{tabular}{c c c}
+  \toprule
+  \textbf{Rank} & \textbf{Order} & \textbf{Attribute} \\
+  \midrule  
+    $0.9274$ & 1 & zhou et, al explicit entropy \\
+    $0.1915$ & 2 & tailor-made entropy \\
+  $0.14502$ & 26 & fft8 block2 \\
+  $0.14502$ & 28 & fft10 block2 \\
+  $0.14088$ & 25 & fft7 block2 \\
+  $0.14088$ & 29 & fft11 block2 \\
+  $0.13726$ & 27 & fft9 block2 \\
+  $0.12276$ & 24 & fft6 block2 \\
+  $0.12276$ & 30 & fft12 block2 \\
+  $0.11121$ & 40 & ar2 block2 \\
+  \bottomrule
+\end{tabular}
+\end{threeparttable}
+\end{center}
+\end{table}
+
+
+\section{Final remarks}
+It is possible to see how a general improvement at a global level can be achieved through the addition of morphological components. On a good number of them, great improvements are obtained, which unfortunately are minimized at the level of final metrics. Moreover, since in the \ref{sec:significant_features} section entropy was found to be of great importance, an experiment on a dataset with explicit, implicit entropy and both were proposed.
+
+\subsection{Results without morphology}
+In the case of the explicit dataset (with tailor-made entropy), the overall performance was lower than in the case of the replication. But an outstanding increment was obtained in the case of the \verb|logistic| algorithm in term of $SE$ around $(+0.92)$. The $MCC$ though of the \verb|logistic| was quite low compared to the replica. All in all, the expected result, since the threshold was not used to discriminate against the Shannon entropy. 
+
+As for the encoded case, an increase in performance was hypothesised, which proved to be true. Five out of seven algorithms were able to obtain an increase in $MCC$ ($+0.14$) compared to the replica. It is important to underline that \verb|j48|, \verb|ibk|, \verb|random forest| and \verb|reptree| had the same performances and \verb|logistic| in contrast to the first case, was the algorithm with the worst performance.
+
+Instead for the last case where both entropies were used, a performance to report is certainly that of the algorithm \verb|bayesnet| with an increment in terms of $MCC$ equal to $(+0.06)$. In any case, the experiment in question was placed in the middle between the two previous ones.
+
+\begin{table}[h]
+\begin{center}
+\begin{threeparttable}
+\caption{Machine learning algorithms applied on the dataset with explicit and encoded entropy, compared with the replication of Zhou and Zhou, et al \cite{zhou2015} itself.}
 \label{table:zhou_unimol_explicit_encoded}
 \scriptsize
   \begin{tabular}{c c c c c c c}
@@ -144,69 +242,7 @@ As already explained in \ref{sec:entropy}, $hr_n$ is labelled as AF if the coars
 \end{center}
 \end{table}
 
-The first experiment consisted of using a dataset with encoded/explicit entropy, custom entropy and of course the oracle as a label (Table \ref{table:zhou_unimol_explicit_encoded}). In the case of the explicit dataset (explicit and custom entropy with the oracle), the overall performance was lower than in the case of the replication. But an outstanding increment was obtained in the case of the \verb|logistic| algorithm in term of $SE$ around $(+0.92)$. The $MCC$ though of the \verb|logistic| was quite low compared to the replica. All in all, the expected result, since the threshold was not used to discriminate against the Shannon entropy. 
-
-As for the encoded case, an increase in performance was hypothesised, which proved to be true. Five out of seven algorithms were able to obtain an increase in $MCC$ ($+0.14$) compared to the replica. It is important to underline that \verb|j48|, \verb|ibk|, \verb|random forest| and \verb|reptree| had the same performances and \verb|logistic| in contrast to the first case, was the algorithm with the worst performance.
-
-Instead for the last case where both entropies were used, a performance to report is certainly that of the algorithm \verb|bayesnet| with an increment in terms of $MCC$ equal to $(+0.06)$. In any case, the experiment in question was placed in the middle between the two previous ones.
-
-Experimentation with the encoded dataset can be considered successful. If we consider that it has been applied on a basis that does not reach Zhou, we can assume that applying it on the latter, we should achieve improvements.
-
-\subsubsection{Fast Fourier Transform and AR Coefficients}
-The explicit and encoded datasets of the previous experimentation were used as a base, on which signal analysis was done excluding records \verb|03665| and \verb|00735| (no \verb|.hea| file). Each interval $[R_i, R_{i+1}]$ was divided into two blocks. For every block, Fast Fourier Transform was applied to obtain 16 values and 4 Autoregressive model's coefficients estimated through Yule–Walker equations. 
-
-\begin{table}[h]
-\begin{center}
-\begin{threeparttable}
-\caption{Machine learning algorithms applied on the dataset with Fast Fourier Transform and AR coefficients, compared with the replication of Zhou and Zhou, et al \cite{zhou2015} itself.}
-\label{table:zhou_unimol_fft_ar}
-\scriptsize
-  \begin{tabular}{c c c c c c c}
-  \toprule
-  \textbf{Dataset} & \textbf{Algorithm} & \multicolumn{5}{c}{\textbf{Results}} \\
-  \cline{3-7}
-  \\
-  & & $\mathbf{SE(\%)}$ & $\mathbf{SP(\%)}$ & $\mathbf{PPV(\%)}$ & $\mathbf{ACC(\%)}$ & $\mathbf{MCC(\%)}$\\
-  \midrule  
-  Explicit FFT & j48 & 84.38 & 95.48 & 93.88 & 90.47 & 80.93 \\ 
-  & logistic & \textbf{97.00} & 95.73 & 94.92 & 96.30 & 92.56 \\
-  & adaboostm1 & 95.49 & 97.06 & 96.39 & 96.35 & 92.63 \\
-  & randomforest & 88.78 & 96.82 & 95.83 & 93.19 & 86.36 \\
-  & reptree &  84.82 & 95.06 & 93.39 & 90.44 & 80.82 \\
-  \hline
-  Encoded FFT & j48 & 89.01 & 93.36 & 91.68 & 91.40 & 82.61 \\
-  & logistic & 96.27 & 96.61 & 95.89 & 96.46 & 92.85 \\
-  & adaboostm1 & 95.97 & 97.26 & 96.65 & 96.68 & \textbf{93.29} \\
-  & randomforest & 92.44 & 94.95 & 93.78 & 93.82 & 87.51 \\
-  & reptree  & 90.85 & 93.40 & 91.89 & 92.25 & 84.34 \\
-  \hline
-  Explicit FFT with AR & j48 & 86.74 & 94.96 & 93.40 & 91.25 & 82.40 \\
-  & logistic & 96.85 & 95.66 & 94.83 & 96.19 & 92.35 \\
-  & adaboostm1 & 95.49 & 97.06 & 96.39 & 96.35 & 92.63 \\
-  & randomforest & 92.30 & 97.18 & 96.42 & 94.98 & 89.89 \\
-  & reptree & 89.86 & 95.23 & 93.94 & 92.81 & 85.49 \\
-  \hline
-  AFDB$^1$ & \textbf{replication} & 95.94 & 97.23 & 96.61 & 96.65 & 93.23 \\
-  \bottomrule
-\end{tabular}
-\begin{tablenotes}
-	\item $^1$ Records \verb|00735| and \verb|03665| excluded.
- 	\item ‘NA’ indicates not applicable because there the metric is not offered by the reference \cite{zhou2015}.
-    \end{tablenotes}
-\end{threeparttable}
-\end{center}
-\end{table}
-Table \ref{table:zhou_unimol_fft_ar} shows results of the process. First clarification to do is that some algorithms were removed for performance issues.
-
-In the case of explicit FFT dataset, 16 values were added to the previous dataset with explicit entropy and custom entropy. A several drop in overall performance, compared to the explicit dataset, occurred for most of the algorithms except for \verb|logistic| and \verb|adaboostm1| where it was just slight. The \verb|logistic| tended to find a great number of true positives and in this case it reached its best performance in terms of $SE$ that was equal to $97.00\%$, facilitated by a dataset richer in information.
-
-But as for encoded FFT dataset, the state of the art is outdated again but the increment in terms of $MCC$ was just a marginal $(+0.06)$ with the \verb|adaboostm1|. And if we consider the additional layer of complexity and an increment that is smaller than the previous one of $(+0.14)$ achieved by four algorithms, then we can say that is not successful at all.
-
-In the last case, coefficients of the autoregressive model were used in addition to FFT over the explicit dataset. A general increment in the worst-performing algorithms was achieved, but the \verb|logistic| decreased of $(-0.21)$ in terms of $MCC$ and the \verb|adaboostm1| remained completely unchanged. 
-
-Thus because of the inconsistency in the statistical margins and the increase in complexity compared to the basic version of the datasets, this path can be considered as a failure.
-
-\subsubsection{Transient values}
+\subsubsection{Without 126 transient values}
 \begin{table}[h]
 \begin{center}
 \begin{threeparttable}
@@ -254,14 +290,116 @@ In the case of the explicit dataset, logistic in terms of $SE$ obtained a remark
 
 As for the encoded dataset, the behaviour was quite similar to what happened in \ref{table:zhou_unimol_explicit_encoded}. In fact, \verb|j48|, \verb|ibk|, \verb|random forest| and \verb|reptree| had the same performances. But \verb|logistic| and \verb|adaboostm1| added nothing more to the replica. In terms of $MCC$ compared to the replica, the quartet of algorithms had an increment of around $(+0.08)$. All in all, the experiment without removing the 126 transient beats, obtained greater increments equal to $(+0.14)$ in terms of $MCC$.
 
-\section{Improving specific aspects in AF detection}
-After applying the above techniques, it is necessary to choose the experiment that had the best performance that is that on the encoded entropy dataset. The conclusions on global prediction can be drawn by observing Table \ref{table:overview_global_encoded} based on the mentioned dataset. The AFDB data set consists of 25 records, 12 of which were classified better than the state of the art algorithm. As regards the 3 records not reported in the table, there were neither improvements nor worsening compared to the basic version. Generally, however, there is a slight improvement in the number of correctly classified fibrillating beats.
+%\section{Improving specific aspects in AF detection}
+%After applying the above techniques, it is necessary to choose the experiment that had the best performance that is that on the encoded entropy dataset. The conclusions on global prediction can be drawn by observing Table \ref{table:overview_global_encoded} based on the mentioned dataset. The AFDB data set consists of 25 records, 12 of which were classified better than the state of the art algorithm. As regards the 3 records not reported in the table, there were neither improvements nor worsening compared to the basic version. Generally, however, there is a slight improvement in the number of correctly classified fibrillating beats.
+%\begin{table}[h]
+%\begin{center}
+%\begin{threeparttable}
+%\caption{Records with specific improvements of classification based on encoded entropy experiment.}
+%\label{table:overview_global_encoded}
+%\scriptsize
+%  \begin{tabular}{c c c c c c c}
+%  \toprule
+%  \textbf{Record} & \textbf{Algorithm} & \multicolumn{4}{c}{\textbf{Confusion matrix}} & \textbf{Surpasses}\\
+%  \cline{3-6}
+%  \\
+%  & & $\mathbf{TP}$ & $\mathbf{TN}$ & $\mathbf{FP}$ & $\mathbf{FN}$\\
+%  \midrule  
+%  05261 & j48 \& others & \textbf{771} & 43888 & 702 & \textbf{163} & $Se$\\
+%  & Zhou et, al & 654 & 44217 & 380 & 280 & -\\
+%  \hline
+%  07879$^*$ & j48 \& others & \textbf{39995} & 16447 & 102 & \textbf{40} & $Se, Acc, Mcc$ \\
+%  & logistic, bayesnet, adaboostm1 & \textbf{39945} & 16487 & 62 & \textbf{90}  & $Se$\\
+%  & Zhou et, al & 39943 & 16496 & 60 & 92 & -\\
+%  \hline
+%  06453$^*$ & All & \textbf{126} & \textbf{34288} & \textbf{94} & \textbf{319} & All metrics \\
+%  & Zhou et, al & 117 & 34272 & 117 & 328 & -\\
+%  \hline
+%  04043$^*$ & j48 \& others & \textbf{9170} & 44060 & 3211 & \textbf{5464} & $Se, Acc, Mcc$ \\
+%  & logistic, bayesnet, adaboostm1 & \textbf{8693} & 44211 & 3060 & \textbf{5941} & $Se, Acc, Mcc$ \\
+%  & Zhou et, al & 8544 & 44321 & 2957 & 6090 & - \\
+%  \hline
+%  05091 & j48 \& others & \textbf{4} & 36615 & 12 & \textbf{137} & $Se$ \\
+%  & Zhou et, al & 0 & 36634 & 0 & 141 & - \\
+%  \hline
+%  00735 & logistic, adaboostm1 & 275 & 39840 & \textbf{51} & 57 & $Sp, Ppv$ \\
+%  & Zhou et, al & 277 & 39846 & 52 & 55 & - \\
+%  \hline
+%  03665 & j48 \& others & \textbf{10995} & 41394 & 304 & \textbf{62} & $Se$ \\
+%  & Zhou et, al & 10985 & 41416 & 289 & 72 & - \\
+%  \hline
+%  08405$^*$ & All & \textbf{45019} & 13743 & 8 & \textbf{76} & $Se, Acc, Mcc$ \\
+%  & Zhou et, al & 45003 & 13758 & 0 & 92 & - \\
+%  \hline
+%  06995$^*$ & j48 \& others & \textbf{27028} & 25553 & 2110 & \textbf{488} & $Se$ \\
+%  & logistic, adaboostm1 & \textbf{26975} & \textbf{25645} & \textbf{2018} & \textbf{541} & $All$ \\
+%  & Zhou et, al & 26961 & 25640 & 2023 & 562 & - \\
+%  \hline
+%  07910 & j48 \& others & \textbf{6504} & 29589 & 230 & \textbf{266} & $Se$ \\
+%  & Zhou et, al & 6499 & 29722 & 104 & 271 & - \\
+%  \hline
+%  04908$^*$ & j48 \& others & \textbf{5526} & \textbf{55240} & \textbf{700} & \textbf{284} & $All$ \\
+%  & logistic & 5446 & \textbf{55279} & \textbf{661} & 364 & $Sp, Ppv, Acc, Mcc$ \\
+%  & Zhou et, al & 5491 & 55055 & 892 & 319 & - \\
+%  \hline
+%  08455$^*$ & j48 \& others & \textbf{44189} & 15238 & 40 & \textbf{75} & $Se, Acc, Mcc$ \\
+%  & Zhou et, al & 44103 & 15246 & 39 & 161 & - \\
+%  \hline
+%  05121 & j48 \& others & \textbf{32592} & \textbf{14976} & \textbf{1135} & 1168 & $Sp, Ppv$ \\
+%  & logistic, adaboostm1 & 32589 & \textbf{14986} & \textbf{1125} & 1171 & $Sp, Ppv$ \\
+%  & bayesnet & 32589 & \textbf{14981} & \textbf{1130} & 1171 & $Sp, Ppv$ \\
+%  & Zhou et, al & 32689 & 14923 & 1195 & 1071 & - \\
+%  \hline
+%  08378 & bayesnet, adaboostm1 & 10996 & 33886 & \textbf{142} & 481 & $Sp, Ppv$ \\
+%  & Zhou et, al & 11008 & 33891 & 144 & 469 & - \\
+%  \hline
+%  04015$^*$ & j48 \& others & \textbf{499} & 40714 & 2756 & \textbf{26} & $Se, Mcc$ \\
+%  & logistic, adaboostm1 & 483 & 40807 & \textbf{2663} & 42 & $Sp, Ppv, Mcc$ \\
+%  & bayesnet & \textbf{496} & 40771 & 2699 & \textbf{29} & $Se, Ppv, Mcc$ \\
+%  & Zhou et, al & 485 & 40812 & 2665 & 40 & - \\
+%  \hline
+%  06426 & logistic, adaboostm1 & 52014 & \textbf{799} & \textbf{1220} & 1112 & $Sp, Ppv$ \\
+%  & Zhou et, al & 52095 & 796 & 1223 & 1038 & - \\
+%  \hline
+%  04048$^*$ & j48 \& others & \textbf{632} & 38909 & 202 & \textbf{181} & $Se, Ppv, Acc, Mcc$ \\
+%  & bayesnet & \textbf{556} & 38930 & 181 & \textbf{257} & $Se, Acc, Mcc$ \\
+%  & Zhou et, al & 419 & 38982 & 136 & 394 & - \\
+%  \hline
+%  04936$^*$ & All & \textbf{33559} & 12086 & 1869 & \textbf{6122} & $Se, Acc, Mcc$ \\
+%  & Zhou et, al & 32662 & 12362 & 1600 & 7019 & - \\
+%  \hline
+%  04126$^*$ & j48 \& others & \textbf{3151} & 38664 & 893 & \textbf{142} & $Se, Acc, Mcc$ \\
+%  & logistic, bayesnet, adaboostm1 & 3017 & 38789 & \textbf{768} & 276 & $Sp$ \\
+%  & Zhou et, al & 3021 & 38795 & 769 & 272 & - \\
+%  \hline
+%  07162 & All & 39198 & 0 & 0 & \textbf{90} & $Se, Acc$ \\
+%  & Zhou et, al & 39198 & 0 & 0 & 97 & - \\
+%  \hline
+%  07859 & All & 61789 & 0 & 0 & \textbf{93} & $Se, Acc$ \\
+%  & Zhou et, al & 61789 & 0 & 0 & 100 & - \\
+%  \hline
+%  08219$^*$ & j48 \& others & \textbf{12953} & 42511 & 2578 & \textbf{1241} & $Se, Ppv, Acc, Mcc$ \\
+%  & logistic, bayesnet, adaboostm1 & 12643 & \textbf{42605} & \textbf{2484} & 1551 & $Sp, Ppv, Acc, Mcc$ \\
+%  & Zhou et, al & 12645 & 42555 & 2541 & 1549 & - \\
+%  \bottomrule
+%\end{tabular}
+%\begin{tablenotes}
+%	\item $^*$ record classified better than the state of the art.
+%	\item NOTE: \verb|j48|, \verb|ibk|, \verb|random forest| and \verb|reptree| had the same performances. First one is reported.
+%    \end{tablenotes}
+%\end{threeparttable}
+%\end{center}
+%\end{table}
+%
+%\section{Further developments}
+%Further developments of the work could be more investigations on the gap of beats between the reply and what is reported on the reference paper. It is also necessary to understand what the artefact is between the performance of the replica and that of the paper.
+%Also, it is possible to use neural networks to obtain exhaustive experimentation of machine learning.
 
 \begin{table}[h]
 \begin{center}
 \begin{threeparttable}
-\caption{Records with specific improvements of classification based on encoded entropy experiment.}
-\label{table:overview_global_encoded}
+\caption{Part 1: Records with specific improvements of classification based on encoded entropy with FFT experiment.}
+\label{table:encoded_fft_1}
 \scriptsize
   \begin{tabular}{c c c c c c c}
   \toprule
@@ -270,92 +408,194 @@ After applying the above techniques, it is necessary to choose the experiment th
   \\
   & & $\mathbf{TP}$ & $\mathbf{TN}$ & $\mathbf{FP}$ & $\mathbf{FN}$\\
   \midrule  
-  05261 & j48 \& others & \textbf{771} & 43888 & 702 & \textbf{163} & $Se$\\
-  & Zhou et, al & 654 & 44217 & 380 & 280 & -\\
-  \hline
-  07879$^*$ & j48 \& others & \textbf{39995} & 16447 & 102 & \textbf{40} & $Se, Acc, Mcc$ \\
-  & logistic, bayesnet, adaboostm1 & \textbf{39945} & 16487 & 62 & \textbf{90}  & $Se$\\
-  & Zhou et, al & 39943 & 16496 & 60 & 92 & -\\
-  \hline
-  06453$^*$ & All & \textbf{126} & \textbf{34288} & \textbf{94} & \textbf{319} & All metrics \\
-  & Zhou et, al & 117 & 34272 & 117 & 328 & -\\
-  \hline
-  04043$^*$ & j48 \& others & \textbf{9170} & 44060 & 3211 & \textbf{5464} & $Se, Acc, Mcc$ \\
-  & logistic, bayesnet, adaboostm1 & \textbf{8693} & 44211 & 3060 & \textbf{5941} & $Se, Acc, Mcc$ \\
-  & Zhou et, al & 8544 & 44321 & 2957 & 6090 & - \\
-  \hline
-  05091 & j48 \& others & \textbf{4} & 36615 & 12 & \textbf{137} & $Se$ \\
-  & Zhou et, al & 0 & 36634 & 0 & 141 & - \\
-  \hline
-  00735 & logistic, adaboostm1 & 275 & 39840 & \textbf{51} & 57 & $Sp, Ppv$ \\
-  & Zhou et, al & 277 & 39846 & 52 & 55 & - \\
-  \hline
-  03665 & j48 \& others & \textbf{10995} & 41394 & 304 & \textbf{62} & $Se$ \\
-  & Zhou et, al & 10985 & 41416 & 289 & 72 & - \\
-  \hline
-  08405$^*$ & All & \textbf{45019} & 13743 & 8 & \textbf{76} & $Se, Acc, Mcc$ \\
-  & Zhou et, al & 45003 & 13758 & 0 & 92 & - \\
-  \hline
-  06995$^*$ & j48 \& others & \textbf{27028} & 25553 & 2110 & \textbf{488} & $Se$ \\
-  & logistic, adaboostm1 & \textbf{26975} & \textbf{25645} & \textbf{2018} & \textbf{541} & $All$ \\
-  & Zhou et, al & 26961 & 25640 & 2023 & 562 & - \\
-  \hline
-  07910 & j48 \& others & \textbf{6504} & 29589 & 230 & \textbf{266} & $Se$ \\
-  & Zhou et, al & 6499 & 29722 & 104 & 271 & - \\
-  \hline
-  04908$^*$ & j48 \& others & \textbf{5526} & \textbf{55240} & \textbf{700} & \textbf{284} & $All$ \\
-  & logistic & 5446 & \textbf{55279} & \textbf{661} & 364 & $Sp, Ppv, Acc, Mcc$ \\
-  & Zhou et, al & 5491 & 55055 & 892 & 319 & - \\
-  \hline
-  08455$^*$ & j48 \& others & \textbf{44189} & 15238 & 40 & \textbf{75} & $Se, Acc, Mcc$ \\
-  & Zhou et, al & 44103 & 15246 & 39 & 161 & - \\
-  \hline
-  05121 & j48 \& others & \textbf{32592} & \textbf{14976} & \textbf{1135} & 1168 & $Sp, Ppv$ \\
-  & logistic, adaboostm1 & 32589 & \textbf{14986} & \textbf{1125} & 1171 & $Sp, Ppv$ \\
-  & bayesnet & 32589 & \textbf{14981} & \textbf{1130} & 1171 & $Sp, Ppv$ \\
-  & Zhou et, al & 32689 & 14923 & 1195 & 1071 & - \\
-  \hline
-  08378 & bayesnet, adaboostm1 & 10996 & 33886 & \textbf{142} & 481 & $Sp, Ppv$ \\
-  & Zhou et, al & 11008 & 33891 & 144 & 469 & - \\
-  \hline
-  04015$^*$ & j48 \& others & \textbf{499} & 40714 & 2756 & \textbf{26} & $Se, Mcc$ \\
-  & logistic, adaboostm1 & 483 & 40807 & \textbf{2663} & 42 & $Sp, Ppv, Mcc$ \\
-  & bayesnet & \textbf{496} & 40771 & 2699 & \textbf{29} & $Se, Ppv, Mcc$ \\
-  & Zhou et, al & 485 & 40812 & 2665 & 40 & - \\
-  \hline
-  06426 & logistic, adaboostm1 & 52014 & \textbf{799} & \textbf{1220} & 1112 & $Sp, Ppv$ \\
-  & Zhou et, al & 52095 & 796 & 1223 & 1038 & - \\
-  \hline
-  04048$^*$ & j48 \& others & \textbf{632} & 38909 & 202 & \textbf{181} & $Se, Ppv, Acc, Mcc$ \\
-  & bayesnet & \textbf{556} & 38930 & 181 & \textbf{257} & $Se, Acc, Mcc$ \\
-  & Zhou et, al & 419 & 38982 & 136 & 394 & - \\
-  \hline
-  04936$^*$ & All & \textbf{33559} & 12086 & 1869 & \textbf{6122} & $Se, Acc, Mcc$ \\
-  & Zhou et, al & 32662 & 12362 & 1600 & 7019 & - \\
-  \hline
-  04126$^*$ & j48 \& others & \textbf{3151} & 38664 & 893 & \textbf{142} & $Se, Acc, Mcc$ \\
-  & logistic, bayesnet, adaboostm1 & 3017 & 38789 & \textbf{768} & 276 & $Sp$ \\
-  & Zhou et, al & 3021 & 38795 & 769 & 272 & - \\
-  \hline
-  07162 & All & 39198 & 0 & 0 & \textbf{90} & $Se, Acc$ \\
-  & Zhou et, al & 39198 & 0 & 0 & 97 & - \\
-  \hline
-  07859 & All & 61789 & 0 & 0 & \textbf{93} & $Se, Acc$ \\
-  & Zhou et, al & 61789 & 0 & 0 & 100 & - \\
-  \hline
-  08219$^*$ & j48 \& others & \textbf{12953} & 42511 & 2578 & \textbf{1241} & $Se, Ppv, Acc, Mcc$ \\
-  & logistic, bayesnet, adaboostm1 & 12643 & \textbf{42605} & \textbf{2484} & 1551 & $Sp, Ppv, Acc, Mcc$ \\
-  & Zhou et, al & 12645 & 42555 & 2541 & 1549 & - \\
+    05261 & j48 & \textbf{760} & 42459 & 2131 & \textbf{174} & $Se$ \\
+    05261 & logistic & \textbf{682} & 44137 & 453 & \textbf{252} & $Se$ \\
+    05261 & adaboostm1 & \textbf{655} & 44195 & 395 & \textbf{279} & $Se$ \\
+    05261 & randomforest & \textbf{714} & 43248 & 1342 & \textbf{220} & $Se$ \\
+    05261 & reptree & \textbf{768} & 42507 & 2083 & \textbf{166} & $Se$ \\
+    05261 & Zhou et, al & 654 & 44217 & 380 & 280 & $-$ \\
+    \hline
+    07879 & j48 & \textbf{39982} & 16222 & 327 & \textbf{53} & $Se$ \\
+    07879 & logistic & \textbf{39945} & 16486 & 63 & \textbf{90} & $Se$ \\
+    07879 & adaboostm1 & \textbf{39945} & 16487 & 62 & \textbf{90} & $Se$ \\
+    07879 & randomforest & \textbf{39963} & 16396 & 153 & \textbf{72} & $Se$ \\
+    07879 & reptree & \textbf{39988} & 15974 & 575 & \textbf{47} & $Se$ \\
+    07879 & Zhou et, al & 39943 & 16496 & 60 & 92 & $-$ \\
+    \hline
+    06453 & j48 & \textbf{187} & 22141 & 12241 & \textbf{258} & $Se$ \\
+    06453 & logistic, adaboostm1 & \textbf{126} & 34290 & 92 & \textbf{319} & $All$ \\
+    06453 & randomforest & \textbf{133} & 24539 & 9843 & \textbf{312} & $Se$ \\
+    06453 & reptree & \textbf{165} & 22936 & 11446 & \textbf{280} & $Se$ \\
+    06453 & Zhou et, al & 117 & 34272 & 117 & 328 & $-$ \\
+    \hline
+    04043 & j48 & \textbf{8784} & 44373 & 2898 & \textbf{5850} & $All$ \\
+    04043 & logistic, adaboostm1 & \textbf{8693} & 44211 & 3060 & \textbf{5941} & $Se, Ppv, Acc, Mcc$ \\
+    04043 & randomforest & \textbf{8862} & 44493 & 2778 & \textbf{5772} & $All$ \\
+    04043 & reptree & \textbf{8945} & 44110 & 3161 & \textbf{5689} & $Se$ \\
+    04043 & Zhou et, al & 8544 & 44321 & 2957 & 6090 & $-$ \\
+    \hline
+    05091 & j48 & \textbf{17} & 34977 & 1650 & \textbf{124} & $Se$ \\
+    05091 & logistic, adaboostm1 & 0 & 36627 & 0 & 141 & $None$ \\
+    05091 & randomforest & \textbf{5} & 36346 & 281 & \textbf{136} & $Se$ \\
+    05091 & reptree & \textbf{6} & 34560 & 2067 & \textbf{135} & $Se$ \\
+    05091 & Zhou et, al & 0 & 36634 & 0 & 141 & $-$ \\
+    \hline
+    08405 & j48 & 43452 & 13709 & 42 & 1643 & $None$ \\
+    08405 & logistic & 44974 & 13330 & 421 & 121 & $None$ \\
+    08405 & adaboostm1 & \textbf{45005} & 13751 & 0 & \textbf{90} & $Acc, Mcc$ \\
+    08405 & randomforest & 44986 & 13742 & 9 & 109 & $None$ \\
+    08405 & reptree & 44805 & 13720 & 31 & 290 & $None$ \\
+    08405 & Zhou et, al & 45003 & 13758 & 0 & 92 & $-$ \\
+    \hline
+    08434 & j48 & 1707 & 35874 & 1656 & 603 & $None$ \\
+    08434 & logistic, adaboostm1 & 2310 & 37359 & 171 & 0 & $None$ \\
+    08434 & randomforest & 2123 & 36649 & 881 & 187 & $None$ \\
+    08434 & reptree & 1667 & 36573 & 957 & 643 & $None$ \\
+    08434 & Zhou et, al & 2310 & 37369 & 168 & 0 & $-$ \\
+    \hline
+    06995 & j48 & 26854 & 25223 & 2440 & 662 & $None$ \\
+    06995 & logistic & \textbf{27007} & 25618 & 2045 & 509 & $Se, Acc, Mcc$ \\
+    06995 & adaboostm1 & \textbf{26975} & \textbf{25645} & \textbf{2018} & \textbf{541} & $All$ \\
+    06995 & randomforest & 26948 & 25556 & 2107 & 568 & $None$ \\
+    06995 & reptree & 26524 & 25119 & 2544 & 992 & $None$ \\
+    06995 & Zhou et, al & 26961 & 25640 & 2023 & 562 & $-$ \\
+    \hline
+    04746 & j48 & 30020 & 16882 & 108 & 853 & $None$ \\
+    04746 & logistic, adaboostm1 & 30732 & 16894 & 96 & 141 & $None$ \\
+    04746 & randomforest & 30552 & 16881 & 109 & 321 & $None$ \\
+    04746 & reptree & 29516 & 16892 & 98 & 1357 & $None$ \\
+    04746 & Zhou et, al & 30732 & 16902 & 95 & 141 & $-$ \\
+    \hline
+    07910 & j48 & 6153 & 29132 & 687 & 617 & $None$ \\
+    07910 & logistic, adaboostm1 & 6499 & 29715 & 104 & 271 & $None$ \\
+    07910 & randomforest & 6195 & 29503 & 316 & 575 & $None$ \\
+    07910 & reptree & 5498 & 29280 & 539 & 1272 & $None$ \\
+    07910 & Zhou et, al & 6499 & 29722 & 104 & 271 & $-$ \\
   \bottomrule
 \end{tabular}
-\begin{tablenotes}
-	\item $^*$ record classified better than the state of the art.
-	\item NOTE: \verb|j48|, \verb|ibk|, \verb|random forest| and \verb|reptree| had the same performances. First one is reported.
-    \end{tablenotes}
 \end{threeparttable}
 \end{center}
 \end{table}
 
-\section{Further developments}
-Further developments of the work could be more investigations on the gap of beats between the reply and what is reported on the reference paper. It is also necessary to understand what the artefact is between the performance of the replica and that of the paper.
-Also, it is possible to use neural networks to obtain exhaustive experimentation of machine learning.
+\begin{table}[h]
+\begin{center}
+\begin{threeparttable}
+\caption{Part 2: Records with specific improvements of classification based on encoded entropy with FFT experiment.}
+\label{table:encoded_fft_2}
+\scriptsize
+  \begin{tabular}{c c c c c c c}
+  \toprule
+  \textbf{Record} & \textbf{Algorithm} & \multicolumn{4}{c}{\textbf{Confusion matrix}} & \textbf{Surpasses}\\
+  \cline{3-6}
+  \\
+  & & $\mathbf{TP}$ & $\mathbf{TN}$ & $\mathbf{FP}$ & $\mathbf{FN}$\\
+  \midrule  
+    08215 & j48 & 30146 & 10173 & \textbf{43} & 2984 & $Sp$ \\
+    08215 & logistic, adaboostm1 & 32958 & 10171 & 45 & 172 & $None$ \\
+    08215 & randomforest & 32409 & 10175 & \textbf{41} & 721 & $Sp, Ppv$ \\
+    08215 & reptree & 32118 & 10168 & 48 & 1012 & $None$ \\
+    08215 & Zhou et, al & 32958 & 10178 & 45 & 172 & $-$ \\
+    \hline
+    04908 & j48 & 5313 & 53909 & 2031 & 497 & $None$ \\
+    04908 & logistic & 5446 & \textbf{55275} & \textbf{665} & 364 & $Sp, Ppv, Acc, Mcc$ \\
+    04908 & adaboostm1 & 5446 & \textbf{55279} & \textbf{661} & 364 & $Sp, Ppv, Acc, Mcc$ \\
+    04908 & randomforest & 5348 & 53829 & 2111 & 462 & $None$ \\
+    04908 & reptree & 5362 & 53508 & 2432 & 448 & $None$ \\
+    04908 & Zhou et, al & 5491 & 55055 & 892 & 319 & $-$ \\
+    \hline
+    08455 & j48 & 43737 & 15205 & 73 & 527 & $None$ \\
+    08455 & logistic, adaboostm1 & 44102 & 15239 & 39 & 162 & $None$ \\
+    08455 & randomforest & 43975 & 15236 & 42 & 289 & $None$ \\
+    08455 & reptree & 43884 & 15227 & 51 & 380 & $None$ \\
+    08455 & Zhou et, al & 44103 & 15246 & 39 & 161 & $-$ \\
+    \hline
+    05121 & j48 & 32613 & 13830 & 2281 & 1147 & $None$ \\
+    05121 & logistic, adaboostm1 & 32589 & \textbf{14986} & \textbf{1125} & 1171 & $Sp, Ppv$ \\
+    05121 & randomforest & 32686 & 14478 & 1633 & 1074 & $None$ \\
+    05121 & reptree & 32650 & 13115 & 2996 & 1110 & $None$ \\
+    05121 & Zhou et, al & 32689 & 14923 & 1195 & 1071 & $-$ \\
+    \hline
+    08378 & j48 & 9217 & 33815 & 213 & 2260 & $None$ \\
+    08378 & logistic & 10994 & 33441 & 587 & 483 & $None$ \\
+    08378 & adaboostm1 & 10996 & 33886 & \textbf{142} & 481 & $Sp, Ppv$ \\
+    08378 & randomforest & 10108 & 33839 & 189 & 1369 & $None$ \\
+    08378 & reptree & 10031 & 33834 & 194 & 1446 & $None$ \\
+    08378 & Zhou et, al & 11008 & 33891 & 144 & 469 & $-$ \\
+    \hline
+    04015 & j48 & \textbf{488} & 39394 & 4076 & \textbf{37} & $Se$ \\
+    04015 & logistic & 483 & 40787 & 2683 & 42 & $None$ \\
+    04015 & adaboostm1 & 483 & 40807 & \textbf{2663} & 42 & $Sp$ \\
+    04015 & randomforest & 466 & 40650 & 2820 & 59 & $None$ \\
+    04015 & reptree & \textbf{487} & 39872 & 3598 & \textbf{38} & $Sp$ \\
+    04015 & Zhou et, al & 485 & 40812 & 2665 & 40 & $-$ \\
+    \hline
+    06426 & j48 & 50954 & 731 & 1288 & 2172 & $None$ \\
+    06426 & logistic & 52015 & 781 & 1238 & 1111 & $None$ \\
+    06426 & adaboostm1 & 52014 & \textbf{799} & \textbf{1220} & 1112 & $Sp, Ppv$ \\
+    06426 & randomforest & 51638 & \textbf{797} & \textbf{1222} & 1488 & $Sp$ \\
+    06426 & reptree & 50734 & 734 & 1285 & 2392 & $None$ \\
+    06426 & Zhou et, al & 52095 & 796 & 1223 & 1038 & $-$ \\
+    \hline
+    04048 & j48 & \textbf{567} & 38838 & 273 & \textbf{246} & $Se, Acc, Mcc$ \\
+    04048 & logistic & \textbf{435} & 38966 & 145 & \textbf{378} & $Se, Acc, Mcc$ \\
+    04048 & adaboostm1 & 419 & 38974 & 137 & 394 & $None$ \\
+    04048 & randomforest & \textbf{476} & 38958 & 153 & \textbf{337} & $Se, Ppv, Acc, Mcc$ \\
+    04048 & reptree & \textbf{548} & 38924 & 187 & \textbf{265} & $Se, Acc, Mcc$ \\
+    04048 & Zhou et, al & 419 & 38982 & 136 & 394 & $-$ \\
+    \hline
+    04936 & j48 & 24127 & \textbf{12672} & \textbf{1283} & 15554 & $Sp$ \\
+    04936 & logistic & \textbf{34342} & 9273 & 4682 & \textbf{5339} & $Se$ \\
+    04936 & adaboostm1 & \textbf{32834} & 12281 & 1674 & \textbf{6847} & $Se, Acc, Mcc$ \\
+    04936 & randomforest & 27801 & \textbf{12633} & \textbf{1322} & 11880 & $Sp, Ppv$ \\
+    04936 & reptree & 28221 & 12267 & 1688 & 11460 & $None$ \\
+    04936 & Zhou et, al & 32662 & 12362 & 1600 & 7019 & $-$ \\
+  \bottomrule
+\end{tabular}
+\end{threeparttable}
+\end{center}
+\end{table}
+\begin{table}[h]
+\begin{center}
+\begin{threeparttable}
+\caption{Part 3: Records with specific improvements of classification based on encoded entropy with FFT experiment.}
+\label{table:encoded_fft_3}
+\scriptsize
+  \begin{tabular}{c c c c c c c}
+  \toprule
+  \textbf{Record} & \textbf{Algorithm} & \multicolumn{4}{c}{\textbf{Confusion matrix}} & \textbf{Surpasses}\\
+  \cline{3-6}
+  \\
+  & & $\mathbf{TP}$ & $\mathbf{TN}$ & $\mathbf{FP}$ & $\mathbf{FN}$\\
+  \midrule  
+ 04126 & j48 & \textbf{3047} & 37841 & 1716 & \textbf{246} & $Se$ \\
+    04126 & logistic & 3017 & 38789 & \textbf{768} & 276 & $Sp$ \\
+    04126 & adaboostm1 & 3017 & 38789 & \textbf{768} & 276 & $Sp$ \\
+    04126 & randomforest & \textbf{3080} & 38508 & 1049 & \textbf{213} & $Se$ \\
+    04126 & reptree & \textbf{3098} & 38210 & 1347 & \textbf{195} & $Se$ \\
+    04126 & Zhou et, al & 3021 & 38795 & 769 & 272 & $-$ \\
+    \hline
+    07162 & j48 & 39161 & 0 & 0 & 127 & $None$ \\
+    07162 & logistic & 39198 & 0 & 0 & \textbf{90} & $Se, Acc$ \\
+    07162 & adaboostm1 & 39198 & 0 & 0 & \textbf{90} & $Se, Acc$ \\
+    07162 & randomforest & 39198 & 0 & 0 & \textbf{90} & $Se, Acc$ \\
+    07162 & reptree & 39141 & 0 & 0 & 147 & $None$ \\
+    07162 & Zhou et, al & 39198 & 0 & 0 & 97 & $-$ \\
+    \hline
+    07859 & j48 & 43752 & 0 & 0 & 18130 & $None$ \\
+    07859 & logistic & 61789 & 0 & 0 & \textbf{93} & $Se, Acc$ \\
+    07859 & adaboostm1 & 61789 & 0 & 0 & \textbf{93} & $Se, Acc$ \\
+    07859 & randomforest & 51086 & 0 & 0 & 10796 & $None$ \\
+    07859 & reptree & 46305 & 0 & 0 & 15577 & $None$ \\
+    07859 & Zhou et, al & 61789 & 0 & 0 & 100 & $-$ \\
+    \hline
+    08219 & j48 & \textbf{12931} & 41354 & 3735 & \textbf{1263} & $Se$ \\
+    08219 & logistic & 12643 & 42537 & 2552 & 1551 & $None$ \\
+    08219 & adaboostm1 & 12643 & \textbf{42605} & \textbf{2484} & 1551 & $Sp, Pre, Acc, Mcc$ \\
+    08219 & randomforest & \textbf{12699} & 42199 & 2890 & \textbf{1495} & $Se$ \\
+    08219 & reptree & \textbf{12866} & 41516 & 3573 & \textbf{1328} & $Se$ \\
+    08219 & Zhou et, al & 12645 & 42555 & 2541 & 1549 & $-$ \\
+  \bottomrule
+\end{tabular}
+\end{threeparttable}
+\end{center}
+\end{table}

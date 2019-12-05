@@ -1,0 +1,17 @@
+\chapter{Conclusions} 
+
+\section{Final remarks}
+The thesis highlights the danger of atrial fibrillation and how there is a need for automatic tools that can detect it and allows to avoid in some cases much more serious diseases. 
+Several works in the literature try to define automatic instruments, some are based on the irregularity of the $RR$ segments, others on the rhythm of the heartbeat. The thesis is based on the latter.
+
+Two approaches are proposed to improve the state of the art considered.
+\begin{enumerate}
+\item The first approach at a global level seeks to improve the number of fibrillating and non-fibrillating beats, correctly classified, by using machine learning techniques to be applied on datasets enriched with morphological features, such as Fourier fast transform and AR coefficients.
+In this case, considerable improvements on some records were obtained.
+\item The second approach, on the other hand, imposes the objective of finding an optimal threshold that adapts in real-time, working exclusively on the threshold.
+The results are promising because they are very close to the optimal threshold, but still need to be improved.
+\end{enumerate}
+
+\section{Future works}
+Future work will focus on improving individual approaches in a totally independent manner. In the first case, experiment with neural networks. In the second case, try to use genetic algorithms to improve the prediction of local thresholds.
+The next step could be to experiment with an adaptive approach on a global model. That is, to adapt the threshold taking into account what is the morphology of the patient.

@@ -6,25 +6,19 @@
 In this Chapter, an automatic approach to detect Atrial Fibrillation is analysed. The state of the art is based on different public datasets offered by PhysioNet \cite{physionet}, among which MIT-BIH Atrial Fibrillation Database \cite{afdb} and Long Term AF Database \cite{ltafdb} are used.
 The method is based on ECG, whose explanation has been given in Section \ref{sec:ecg_diagnose}. The reason that lies behind the use of ECG, is its intrinsic simplicity, that cannot be found in methods like blood tests, chest x-ray, etc.
 
-\subsection{Description of the MIT-BIH AFDB}
-The database includes $25$ long-term ECG recordings of patients with atrial fibrillation, which is mostly paroxysmal. Each record is $10$ hours in duration and contains two ECG signals sampled at 250 samples per second with $12-bit$ resolution over a range of $\pm 10$ millivolts. The signals files \verb|.dat| are available only on 23 records. But all of the records have \verb|.atr| and \verb|.qrs| annotations files. The former contains information about the kind of rhythm: atrial fibrillation, atrial flutter, junctional rhythm or other rhythms. The latter contains unaudited beat prepared using an automated detector and have not been corrected manually. In some cases, manually corrected beat annotations files \verb|.qrsc| are present.
+\section{Methods of the literature}
+Most of the algorithms work on the processing of the ECGs components (P wave, QRS complex, ...) and the poorly coordinate atrial activation (AA) of heart and rapid cardiac beating. Although these pieces of information can lead to the identification of Atrial Fibrillation, noise must be taken into consideration. Especially with P waves which in general is of very low-intensity magnitude. Whereas the approaches based on the RR interval (R wave peak to R wave peak) irregularity, nonetheless the component is a more prominent feature of ECG and thus less subject to noise, tend to be quite complicated and not so efficient to make them suitable for real-time applications \cite[p. 2]{zhou2015}. Examples of noteworthy methods based on RRI are the Petrėnas, et al \cite[2015]{petrenas2015} and Lee, et al \cite[2013]{lee2013}. The former is characterized by the use of ectopic beat filtering, bigeminal suppression and signal fusion, while the latter focus on time-varying coherence functions and Shannon entropy. A real-time and low-complexity algorithm is Zhou et, al \cite{zhou2015}, based on the heart rate. 
 
-\section{The best approach proposed in literature}
-Most of the algorithms work on the processing of the ECGs components (P wave, QRS complex, ...) and the poorly coordinate atrial activation (AA) of heart and rapid cardiac beating. Although these pieces of information can lead to the identification of Atrial Fibrillation, noise must be taken into consideration. Especially with P waves which in general is of very low-intensity magnitude. Whereas the approaches based on the RR interval (R wave peak to R wave peak) irregularity, nonetheless the component is a more prominent feature of ECG and thus less subject to noise, tend to be quite complicated and not so efficient to make them suitable for real-time applications \cite[p. 2]{zhou2015}. Examples of noteworthy methods based on RRI are the Petrėnas, et al \cite[2015]{petrenas2015} and Lee, et al \cite[2013]{lee2013}. The former is characterized by the use of ectopic beat filtering, bigeminal suppression and signal fusion, while the latter focus on time-varying coherence functions and Shannon entropy.
-
-A real-time and low-complexity but robust method for the discrimination of AF episodes is taken as reference. The algorithm is composed of three steps and is based on the heart rate (HR) \cite[p. 2]{zhou2015}.
-
+\section{The best approach proposed in the literature}
+The algorithm Zhou et, al \cite{zhou2015} is a the base of the thesis. Hence a brief explanation of the main characteristics is needed. The method is composed of three steps defined over the heart rate sequence.
 \fig{img/zhou.png}{0.8}{zhou_img}{Application of the method to detect AF. (a) is the original sequence $hr_n$; (b) is the symbolic dynamic $sy_n$; (c) the word sequence $wn_n$; (d) the distribution of $\mathcal{H}^{\prime\prime} (\mathbf{A})$.} 
-
-\subsection{Heart rate sequence}
+\subsubsection{Heart rate sequence}
 Let $hr_n$ be the heartbeat rate sequence obtained from,
 \begin{equation}
 hr_n = 60\, \text{s} \cdot \frac{250}{R_n - R_{n-1}}
 \end{equation}
-where $60$ are the seconds, $R_n$ is the sequence that denotes the $R$ peak in the $QRS$ complex and $250$ is the number of samples per second. From an implementation point of view, here one bpm is lost. The \verb|.qrs| files contain a registration where the first sample does not represent the $R$ peak, therefore all the part before the first $R$ peak cannot be used to compute the first bpm. An example of the sequence $hr_n$ can be found in \reffigtext{zhou_img}{(a)}. The following implementation of the function is done in Python 3.7
-\inputpython{code/bpm.py}{1}{9}
-
-\subsection{Symbolic dynamics of $hr_n$ sequence}
+where $60$ are the seconds, $R_n$ is the sequence that denotes the $R$ peak in the $QRS$ complex and $250$ is the number of samples per second.
+\subsubsection{Step 1: symbolic dynamics of $hr_n$ sequence}
 Let $sy_n$ denote a symbolic dynamics that encodes the information of $hr_n$ to a series with fewer symbols, where the mapping function is given by \cite[p. 3]{zhou2015},
 \begin{equation}
 sy_n = \begin{cases}
@@ -32,50 +26,28 @@ sy_n = \begin{cases}
 \lfloor hr_n / 5 \rfloor & \text{otherwise}
 \end{cases}
 \end{equation}
-where $\lfloor \cdot \rfloor$ is a floor operator. In this way the raw sequence $hr_n$ is transformed in a sequence $sy_n \in [0, 63]$, with 64 instantaneous states \reffigtext{zhou_img}{(b)}. Here below the implementation
-\inputpython{code/sy.py}{1}{2}
-
-\subsection{History sequence of $sy_n$}
+where $\lfloor \cdot \rfloor$ is a floor operator. In this way the raw sequence $hr_n$ is transformed in a sequence $sy_n \in [0, 63]$, with 64 instantaneous states \reffigtext{zhou_img}{(b)}.
+\subsubsection{Step 2: history sequence of $sy_n$}
 A 3-symbols template can be applied to get a window of information that acts as a history \reffigtext{zhou_img}{(c)}, in this case on 3 successive symbols. Through a novel operator-defined below \cite[p. 3]{zhou2015}, the word value can be calculated. 
 \begin{equation}
 wv_n = (sy_{n-2} \times 2^{12}) + (sy_{n-1} \times 2^{6}) + sy_n
 \end{equation}
-A major intrinsic property to be explained is the following,
-\begin{equation}
-|wv| \, = \, |sy| - 2 \, = \, |hr| - 2 \, = \, |qrs| - 3  
-\end{equation}
-where $wv$ denotes the set of words in a specific moment. The set $qrs$ is composed of all the QRSs complexes provided by the ECG, in this case in the \verb|.qrs| files. To sum up, a tiny bit of information is lost, precisely 1 $R$ peak to compute the heartbeat sequence $hr$ and 2 bpm to compute the word sequence $wv$. Here follows the implementation of the above
-\inputpython{code/wv.py}{1}{8}
-
-\subsection{Shannon entropy}
+\subsubsection{Step 3: Shannon entropy}
 \label{sec:entropy}
 A coarser version of Shannon entropy is employed to discriminate the AF arrhythmias \reffigtext{zhou_img}{(d)}. Without loss of generality, let $\mathbf{A} = (A|P)$ denote a dynamic system. The unique elements in this set can be defined as $A = \{a_1, \ldots, a_k\}$ with the interrelated probability set $P = \{p_1, \ldots, p_k\} (1 \le k \le N)$, where $N$ is the total number of elements and $k$ are the unique elements in space $\mathbf{A}$. Each element $a_i$ has the probability $p_i = N_i/N (0 < p_i \le 1, \sum_{i=1}^{k}p_i=1)$, where $N_i$ is the total number of the specific element $a_i$ in space $\mathbf{A}$. Hence the coarser version of Shannon entropy can be defined to quantitatively calculate the information size of $wv_n$,
 \begin{equation}\label{eq:entropy}
 \mathcal{H}^{\prime\prime} (\mathbf{A}) = -\frac{k}{N \, log_2 N} \sum_{i=1}^{k}p_i \, log_2 p_i
 \end{equation}
 The dynamic $\mathcal{A}$ is characterized by a bin size of $N=127$ consecutive word elements from $wv_{n-126}$ to $wv_n$. By defining the characteristic set $A$ and the corresponding probability set $P$, the entropy $\mathcal{H}^{\prime\prime} (\mathbf{A})$ can be calculated. A specific cardiac beat $hr_n$ is labelled as AF if the coarser entropy meets or exceeds a discrimination optimal threshold equal to $0.639$. The threshold was obtained through an investigation of various thresholds in the range $[0.0, 1.0]$ with an increment of $0.001$ from the receiver operating characteristic (ROC) on training databases. 
-The computational challenges that are found in the Equation \ref{eq:entropy} can be overcome with a pre-calculated map of $-\frac{1}{log_2 N}p_i \, log_2 pi_i$ \cite[p. 4]{zhou2015}. Here follows an implementation where a constant value $1000000$ it's used to get decimal floating points as integers through a floor operator.
-\inputpython{code/entropy.py}{1}{22}
+The computational challenges that are found in the Equation \ref{eq:entropy} can be overcome with a pre-calculated map of $-\frac{1}{log_2 N}p_i \, log_2 pi_i$ \cite[p. 4]{zhou2015}.
 
 \section{Results and comparisons}
-\subsubsection{Performance metrics}
 The work under consideration measures the performances using sensitivity ($Se$), specificity ($Sp$), positive predictive value ($PPV$), and overall accuracy ($ACC$) \cite[p. 6]{zhou2015}.
 \begin{equation}
 \label{eq:metrics}
 \begin{aligned} S e &=\frac{T P}{T P+F N},\qquad P P V=\frac{T P}{T P+F P} \\ S p &=\frac{T N}{T N+F P}, \qquad A C C=\frac{T P+T N}{T P+T N+F P+F N} \end{aligned}
 \end{equation}
 where $TP$ stands for true positives, $TN$ true negatives, $FP$ false positives and $FN$ false negatives.
-
-\subsubsection{Training phase}
-The training phase was executed on LTAFDB which consists of 84 long-term ECG recordings (commonly 24 to 25 hours duration) of patients with paroxysmal or persistent/permanent AF. The number of cardiac beats is around 9 million of which 59.2\% are annotated as AF. The threshold, as already mentioned in the previous section \ref{sec:entropy}, is tested from $0.0$ to $1.0$  with an increment of $0.001$. ROC curve is defined based on the metrics $Se$ and $1-Sp$, where a point on the graph is formed by the couple $(Se$; $1-Sp)$ of a specific threshold. Thus the best-case scenario, namely perfect classification, is the couple $a=(Se=1; 1-Sp=0)$, hence the best performance can be found trivially using the Euclidean distance of a generic point from the point $a$. In \reffig{zhou_img}, the best performance point $b$ is found at threshold $0.639$, with distance $0.0576$ from the perfect classification, an area under the ROC curve that is $0.9845$ and the corresponding values of $Se$, $Sp$, $PPV$ and $ACC$ are $96.14\%$, $95.73\%$, $97.03\%$ and $95.97\%$ respectively \cite{zhou2015}. In other words, a slight improvement is made compared to RRI based method Zhou, et al\cite{zhou2014}.
-
-\fig{img/roc_zhou.png}{0.9}{roc}{Receiver operating characteristic when the training set of LTAFDB database is applied with threshold values from $0.0$ to $1.0$ in increments of $0.001$. The calculated value for the area under the blue curve is $0.9845$ \cite{zhou2015}.}
-
-\subsubsection{Testing phase}
-This phase uses the threshold $0.639$ across all testing databases: AFDB, MITDB\cite{mitdb} and NSRDB\cite{nsrdb} set. A complete overview of the results of the state of the art method explained and others can be found in Table \ref{table:zhou_hr_rri}.
-AFDB$^1$ is experimentation without the records \verb|00735| and \verb|03665| for which the \verb|.hea| files are not existent. While AFDB$^2$ excludes the record \verb|04936| and \verb|05091| because many incorrect manual AF annotations are contained \cite{lee2013}. 
-To be sure about experimentation, edge cases are needed. Hence dataset like MITDB which contains many coexisting various types of complex arrhythmias and NSRDB without any AF annotation, are perfect for this purpose.
-
 \begin{table}[h]
 \begin{threeparttable}
 \caption[Performance comparison of some state of the art methods.]{Classification performance of different methods based on three different testing databases \cite[p. 8]{zhou2015}.}
@@ -118,5 +90,8 @@ To be sure about experimentation, edge cases are needed. Hence dataset like MITD
     \end{tablenotes}
 \end{threeparttable}
 \end{table}
+\\
+A complete overview of the results of the state of the art method explained and others can be found in Table \ref{table:zhou_hr_rri}.
+To be sure about experimentation, edge cases are needed. Hence dataset like MITDB which contains many coexisting various types of complex arrhythmias and NSRDB without any AF annotation, are perfect for this purpose. The method performs statistically better than the others \cite[p. 11]{zhou2015} with a very low computational complexity \cite[p. 14]{zhou2015}.
 
-Thus the method performs statistically better than the others \cite[p. 11]{zhou2015} with a very low computational complexity \cite[p. 14]{zhou2015}
+\blankpage

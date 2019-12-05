@@ -1,7 +1,9 @@
 \chapter{Introduction}
 \label{sec:introduction}
 
-\section{What is Atrial Fibrillation?}
+\section{Application context}
+In this section, the most dangerous heart disease is analysed and described by providing information on classification, causes, symptoms and different methods of diagnosis with a particular focus on the electrocardiogram.
+\\
 Atrial fibrillation, also abbreviated with AF or A-Fib, is an abnormal heart rhythm that happens when electrical impulses fire off in the atria \reffig{afib_heart}, from different spots without being organized. Characterized by rapid and irregular beating, caused by the chambers of the heart twitching \cite{cdcgov17}. This arrhythmia is associated with an increased risk of stroke, in fact the proportion of strokes associated with AF increases from 6.6\%, for ages 50 to 59 years, to 36.2\% for ages 80 to 89 years \cite{10.1001/archinte.1987.00370090041008}. Other risks are heart failure and even dementia \cite{Munger2014}. The estimated number of individuals with AF globally in 2010 was 33,5 million and as the population ages globally, the burden of AF grows \cite{doi:10.1161/CIRCULATIONAHA.113.005119}.
 
 \fig{img/afib_heart.jpg}{0.6}{afib_heart}{A normal heartbeat on the left, and AF heartbeat on the right. Image from mayoclinic.org}
@@ -12,14 +14,9 @@ The disease is classified by doctors based on how long it lasts or based on the 
   \item \textbf{Persistent}: the disease lasts longer than a week and it can stop on its own, or a specific medicine or treatment is needed. If the latter does not work, doctors opt for the electrical cardioversion, which is a low-voltage current used to reset the normal rhythm;
   \item \textbf{Permanent}: also called chronic, cannot be treated. The doctor decides for a long term medication to reduce the odds of associated health conditions.
 \end{itemize}
-
-\section{Causes and Symptoms}
 There are many possible causes of the condition, some are controllable, others are not. Cardiovascular factors play a big role: high blood pressure, heart valve disease, congenital heart disease and even previous heart surgery. But difficulties in breathing are a key factor too, in other words, obesity and obstructive sleep apnea \cite{doi:10.1111/obr.12056}. Alcohol consumption and tobacco smoking are associated with an increased risk of developing atrial fibrillation \cite{Tonelo2013, DU20171968}. Other factors are genetics, ageing, a sedentary lifestyle and diabetes \cite{10.1001/jama.291.23.2851, Staerk2017}.
-
 The person often feels an abnormal beating that starts to become longer and constant. There could be heart palpitations, shortness of breath, chest pain,  light-headedness, or fainting \cite{chamberlain_gray_houghton_2010}. But the biggest problem is that often these kind of episodes are asymptomatic \cite{Munger2014}, in fact sometimes first diagnosed when patients present a stroke \cite{page2003asymptomatic}.
-
-\section{Diagnosis}
-\label{af_diagnosis}
+\\
 A doctor to diagnose AF could check your signs and symptoms, together with your medical history and conduct a different kind of tests \cite{mayo_clinic_2019}:
 \begin{itemize}
 \item \textbf{Electrocardiogram} (ECG or EKG) is the process through which a recording of the electrical activity of the patient's heart is made. To measure the electrical signals as they travel, multiple small sensors, called electrodes, are attached to the body. This test plays a key role among all the other tools used. A more in-depth explanation will be offered in Section \ref{sec:ecg_diagnose}.
@@ -30,15 +27,11 @@ A doctor to diagnose AF could check your signs and symptoms, together with your 
 \item \textbf{Stress test} can help the doctor in the task of finding AF. The reason is that some individual with the disease do well in normal activity, but not with exertion. Moreover, the nature of the symptoms can be understood.
 \item \textbf{Chest X-ray} help to see the condition of the lungs and heart of a specific patient. In general, it's used if a pulmonary cause of AF is suggested or if conditions like congestive heart failure are suspected.
 \end{itemize}
-
+\fig{img/ecg.png}{0.4}{cardiac_cycle}{Cardiac cycle divided into different components. $P$, $QRS$ and $T$.}
 The first type of test, the ECG, is an investigation performed routinely whenever an irregular heartbeat is suspected. And it can be done in the office and later even with a portable device, thus it's a relevant tool through which an automatic detection of atrial fibrillation can be implemented.
-
-\section{Diagnosis through the analysis of ECG}
+\\
 \label{sec:ecg_diagnose}
 Electrocardiography produces an electrocardiogram (ECG), namely a recording which is a graph where the x-axis represents the time and the y-axis represents the voltage, of the electrical activity of the heart using electrodes placed on the skin \cite[p.74]{lilly2015pathophysiology}. In this way, small electrical changes can be detected, that are the normal consequences of cardiac muscle depolarization followed by a re-polarization during each cardiac cycle \reffig{cardiac_cycle}.
-
-\fig{img/ecg.png}{0.4}{cardiac_cycle}{Cardiac cycle divided into different components. $P$, $QRS$ and $T$.}
-
 Normally the number of electrodes attached to the patient's limbs and on the surface of the chest is 10, this allows to form 12 ECG leads. Thus the overall magnitude of the electrical potential of the heart can be measured from twelve different angles (leads). 
 
 A single cardiac cycle can be divided into different components as in \reffig{cardiac_cycle}. The first is called $P$ wave, which represents the depolarization of the atria. The second one is the $QRS$ complex, that symbolizes the ventricles' depolarization. To finish with the $T$ wave, which represents the re-polarization of the ventricles \cite[p.80]{lilly2015pathophysiology}.
@@ -48,5 +41,29 @@ A single cardiac cycle can be divided into different components as in \reffig{ca
 Knowing all this, to find atrial fibrillation heartbeats through the electrocardiogram is sufficient to run an investigation on the absence of $P$ waves with disorganized electrical activity in their place and irregular $R-R$ intervals caused by irregular conduction of impulses to the ventricles \cite{doi:10.1161/CIRCULATIONAHA.106.177292}. Furthermore, problems over fast heart rates arise since A-Fib may look more regular, which could make it indistinguishable from other supraventricular tachycardias or ventricular tachycardia \cite{issa2009clinical}.
 Besides $QRS$ complexes should be quite narrow because it means that they are initiated by a normal flow of electrical activity through the intraventricular conduction system. Otherwise wide complexes are disquieting for ventricular tachycardia, albeit in cases where there is a disorder with the conductions system, wide $QRS$ complexes may be present in A-fib with a rapid ventricular response. A good example is shown in \reffig{sinus_and_af}.
 
-In Chapter \ref{sec:global} and Chapter \ref{sec:local}, two different automatic detection of AF approaches are described based on two public datasets offered by PhysioNet \cite{physionet}, respectively MIT-BIH Atrial Fibrillation Database \cite{afdb} and Long Term AF Database \cite{ltafdb}.
+\section{Motivations \& Objectives}
+For the automatic detection of atrial fibrillation, several methods can be found in the literature. Some of these methods are based on the morphology of the ECG, others on the heart rate obtained from the signal. The state-of-the-art method Zhou et, al \cite{zhou2015}, described in Chapter \ref{sec:state_of_the_art}, is based on the latter. Following a thorough analysis, two important limitations emerge:
+\begin{itemize}
+\item morphology is an important factor since AF has no P wave, i.e. a morphological characteristic, due to noise.
+\item using a single discriminant threshold for all patients is a strong intake.
+\end{itemize}
+The objectives of this twofold thesis are therefore the following.
+\begin{itemize}
+\item starting from the state of the art algorithm, try to improve the global prediction system, i.e. a unique for all the patients, by incorporating into the approach of Zhou et, al morphological features.
+\item starting from the state of the art algorithm, realize a local prediction model, i.e. unique and adaptive for a specific patient.
+\end{itemize}
+
+\section{Results achieved}
+The thesis has managed to obtain, with respect to the state of the art algorithm, an increase in performance using datasets morphologically enriched at the level of global prediction. For each specific record, it is possible to obtain remarkable improvements, especially in terms of true positives. Specifically, on the dataset with explicit entropy, tailor-made entropy and FFT improvements are obtained on $MCC$, $SE$, $SP$ respectively equal to $8/23$, $14/23$, $12/23$ and the number of records without improvements is $4/23$. In the dataset based on explicit entropy, tailor-made entropy with FFT and AR coefficients, the results in terms of $MCC$, $SE$, $SP$ are respectively $14/23$, $22/23$ and $13/23$. With only one record without any improvement.
+As for the work on finding the optimal local threshold, the GLS model manages to predict the optimal thresholds with a small difference in most cases. For some records, thresholds are far from the optimal threshold.
+
+\section{Structure of the thesis}
+This thesis is composed of 5 chapters including this one. In particular:
+\begin{itemize}
+\item1 Chapter 1, introduces the application context and briefly explains the reasons for the work and the results of the experimentation.
+\item Chapter 2 introduces the state of the art algorithm for identifying beats subject to atrial fibrillation. The thesis is based on this algorithm and shows its methodology and results.
+\item Chapter 3, is one of the two central parts of the work. It explains how the state of the art was improved by using machine learning techniques on morphologically enriched datasets.
+\item Chapter 4, the other substantial part of the work that focuses on finding an adaptive threshold for a specific patient to describe fibrillating events.
+\item Chapter 5, provides conclusions to the work and future developments.
+\end{itemize}
 \clearpage
